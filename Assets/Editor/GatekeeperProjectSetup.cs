@@ -371,8 +371,10 @@ public static class GatekeeperProjectSetup
 
         var gate = GateObject();
 
-        var hero = (Hero)PrefabUtility.InstantiatePrefab(prefabs.hero);
-        hero.transform.position = new Vector2(0f, -3f);
+        // InstantiatePrefab wants the prefab's root GameObject, not one of its components.
+        var heroGo = (GameObject)PrefabUtility.InstantiatePrefab(prefabs.hero.gameObject);
+        heroGo.transform.position = new Vector2(0f, -3f);
+        var hero = heroGo.GetComponent<Hero>();
 
         var towersRoot = new GameObject("Towers").transform;
         var enemiesRoot = new GameObject("Enemies").transform;
