@@ -10,7 +10,7 @@ public class PixelArtImporter : AssetPostprocessor
     public const string Root = "Assets/Art/Pixel/";
     public const int PixelsPerUnit = 16;
 
-    public override uint GetVersion() => 1;
+    public override uint GetVersion() => 2;
 
     void OnPreprocessTexture()
     {
@@ -39,11 +39,11 @@ public class PixelArtImporter : AssetPostprocessor
         else if (file == "Bar_Frame") importer.spriteBorder = new Vector4(3, 3, 3, 3);
     }
 
-    // Towers, trees, walls and the gate stand on the ground, so their pivot is at their feet.
+    // Characters, towers, trees, walls and the gate stand on the ground, so their pivot is at their feet.
     bool StandsOnGround()
     {
         string file = System.IO.Path.GetFileNameWithoutExtension(assetPath);
-        if (assetPath.Contains("/Towers/") || assetPath.Contains("/Props/")) return true;
+        if (assetPath.Contains("/Towers/") || assetPath.Contains("/Props/") || assetPath.Contains("/Characters/")) return true;
         return assetPath.Contains("/Map/") && !file.StartsWith("BuildSpot");
     }
 }

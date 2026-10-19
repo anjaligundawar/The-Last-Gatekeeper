@@ -24,6 +24,7 @@ namespace Gatekeeper
         [SerializeField] float bowRecoil = 0.12f;
 
         Hero hero;
+        CharacterAnimator animator;
         WeaponType playing;
         float aimAngle;
         float timer;
@@ -32,6 +33,7 @@ namespace Gatekeeper
         void Awake()
         {
             hero = GetComponent<Hero>();
+            animator = GetComponent<CharacterAnimator>();
             baseOrder = weaponRenderer.sortingOrder;
         }
 
@@ -41,6 +43,7 @@ namespace Gatekeeper
             playing = type;
             aimAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             timer = attackTime;
+            if (animator != null) animator.PlayAttack(direction);
         }
 
         void LateUpdate()
