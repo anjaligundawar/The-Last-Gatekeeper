@@ -4,7 +4,7 @@ A 2D top-down gate-defense game where the enemy learns your strategy and adapts 
 
 ## How to play
 
-Each wave has four steps:
+The game opens on a start screen with **Start** and **How to Play** (controls and how the War Council learns). Each wave has four steps:
 
 1. **Build (30 s).** Place up to 6 defences on the 9 build spots, at most 3 of each type. Defences are cleared after every wave.
 2. **Choose a weapon.** Bow, Sword or Spear.
@@ -20,7 +20,8 @@ You lose when the gate or the hero falls. Score = kills × 10 + waves survived �
 | 1 / 2 / 3 | Pick a defence (build) or a weapon (weapon pick) |
 | Left / right click | Place / remove a defence |
 | Enter | Ready / next wave |
-| R | Restart after game over |
+| Enter / H / Esc | Start / open How to Play / close it (start screen) |
+| R / M | Try again / back to the start screen (death screen) |
 
 ## Project setup
 
@@ -40,9 +41,9 @@ Environment, towers, projectiles, icons and UI are 16 px pixel art in `Assets/Ar
 
 ```
 Assets/Scripts/
-  Core/       GameManager (Build → WeaponPick → Wave → Report → GameOver), GameConfig, camera shake
+  Core/       GameManager (Title → Build → WeaponPick → Wave → Report → GameOver), GameConfig, camera shake
   Gameplay/   Hero and weapons, enemies and their state machine, towers, projectiles, map, waves
-  UI/         HUD, build/weapon/report/game-over panels
+  UI/         start screen, HUD, build/weapon/report panels, death screen
 ```
 
 ### Enemy state machine
