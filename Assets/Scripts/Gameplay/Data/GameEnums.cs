@@ -8,6 +8,14 @@ namespace Gatekeeper
         Flyer = 3,
     }
 
+    /// <summary>What an enemy attacks with. Only changes how the attack looks and when it lands.</summary>
+    public enum EnemyWeapon
+    {
+        Sword = 0,
+        Sphere = 1,
+        Bow = 2,
+    }
+
     public enum DamageType
     {
         Physical,

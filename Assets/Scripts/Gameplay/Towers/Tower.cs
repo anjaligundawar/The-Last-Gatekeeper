@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Gatekeeper
 {
-    public class Tower : MonoBehaviour
+    public class Tower : MonoBehaviour, ICooldown
     {
         [SerializeField] TowerData data;
         [SerializeField] SpriteRenderer rangeIndicator;
@@ -12,6 +12,16 @@ namespace Gatekeeper
         [SerializeField] FadeOut pulseEffect;
 
         public TowerData Data => data;
+
+        public float CooldownFraction
+        {
+            get
+            {
+                var gm = GameManager.Instance;
+                if (gm == null || gm.Phase != GamePhase.Wave || data.interval <= 0f) return 0f;
+                return Mathf.Clamp01(cooldown / data.interval);
+            }
+        }
 
         float cooldown;
 

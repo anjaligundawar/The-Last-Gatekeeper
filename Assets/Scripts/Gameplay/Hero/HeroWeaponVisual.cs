@@ -22,6 +22,8 @@ namespace Gatekeeper
         [SerializeField] float holdDistance = 0.35f;
         [SerializeField] float spearReach = 0.6f;
         [SerializeField] float bowRecoil = 0.12f;
+        [Tooltip("How long the weapon flashes white when it attacks. Needs the Sprite Flash material.")]
+        [SerializeField] float flashDuration = 0.06f;
 
         Hero hero;
         CharacterAnimator animator;
@@ -29,12 +31,19 @@ namespace Gatekeeper
         float aimAngle;
         float timer;
         int baseOrder;
+        float flashTimer;
+        MaterialPropertyBlock flashBlock;
+        bool hasFlashMaterial;
+
+        static readonly int FlashAmountId = Shader.PropertyToID("_FlashAmount");
 
         void Awake()
         {
             hero = GetComponent<Hero>();
             animator = GetComponent<CharacterAnimator>();
             baseOrder = weaponRenderer.sortingOrder;
+            flashBlock = new MaterialPropertyBlock();
+            hasFlashMaterial = weaponRenderer.sharedMaterial != null && weaponRenderer.sharedMaterial.HasProperty(FlashAmountId);
         }
 
         public void Play(WeaponType type, Vector2 direction)
@@ -43,6 +52,7 @@ namespace Gatekeeper
             playing = type;
             aimAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             timer = attackTime;
+            flashTimer = flashDuration;
             if (animator != null) animator.PlayAttack(direction);
         }
 
@@ -82,6 +92,14 @@ namespace Gatekeeper
             weaponRenderer.transform.localPosition = new Vector3(distance, 0f, 0f);
             // Pointing up means the weapon is behind the hero.
             weaponRenderer.sortingOrder = Mathf.Sin(angle * Mathf.Deg2Rad) > 0.3f ? baseOrder - 2 : baseOrder;
+
+            if (flashTimer > 0f) flashTimer -= Time.deltaTime;
+            if (hasFlashMaterial)
+            {
+                weaponRenderer.GetPropertyBlock(flashBlock);
+                flashBlock.SetFloat(FlashAmountId, flashTimer > 0f ? 1f : 0f);
+                weaponRenderer.SetPropertyBlock(flashBlock);
+            }
         }
 
         static float EaseOut(float t) => 1f - (1f - t) * (1f - t);

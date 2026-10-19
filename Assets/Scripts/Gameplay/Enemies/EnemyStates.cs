@@ -124,8 +124,7 @@ namespace Gatekeeper
             if (enemy.AttackTimer <= 0f)
             {
                 enemy.AttackTimer = enemy.Data.attackInterval;
-                enemy.Hero.TakeDamage(enemy.Data.damage);
-                enemy.Lunge();
+                enemy.Strike();
             }
         }
     }
@@ -146,8 +145,7 @@ namespace Gatekeeper
             if (enemy.AttackTimer <= 0f)
             {
                 enemy.AttackTimer = enemy.Data.attackInterval;
-                enemy.Gate.Health.Damage(enemy.Data.damage);
-                enemy.Lunge();
+                enemy.Strike();
             }
         }
     }
