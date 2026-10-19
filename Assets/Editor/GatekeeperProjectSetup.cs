@@ -44,6 +44,15 @@ public static class GatekeeperProjectSetup
     [MenuItem("Gatekeeper/Create Project Assets")]
     static void Run()
     {
+        // Saving and opening scenes is not allowed in Play mode, so the setup would stop
+        // half way and leave the old scene in place.
+        if (EditorApplication.isPlaying)
+        {
+            EditorUtility.DisplayDialog("Stop Play mode first",
+                "The setup can't run while the game is playing. Press the Play button to stop, then run Gatekeeper > Create Project Assets again.", "OK");
+            return;
+        }
+
         if (Resources.Load<TMP_Settings>("TMP Settings") == null)
         {
             EditorUtility.DisplayDialog("Import TextMesh Pro first",
@@ -360,6 +369,7 @@ public static class GatekeeperProjectSetup
         SetFloat(health, "maxHp", data.maxHp);
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         var col = go.AddComponent<CircleCollider2D>();
         col.radius = size * 0.5f;
 
@@ -436,6 +446,7 @@ public static class GatekeeperProjectSetup
         SetFloat(health, "maxHp", 100f);
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         go.AddComponent<CircleCollider2D>().radius = 0.3f;
         var body = SpriteObject("Body", go.transform, Art("Characters/Hero/Walk_Down_0"), Color.white, new Vector2(0f, -0.45f), Vector2.one, 20);
         AddAnimator(go, body, "Characters/Hero", alwaysAnimate: false);
@@ -909,11 +920,10 @@ public static class GatekeeperProjectSetup
         "2. <b>Weapon</b>  Press 1 Bow (long range), 2 Sword (wide swing) or 3 Spear (long poke).\n" +
         "3. <b>Fight</b>  WASD to move, Space or J to attack. Attacks aim at the nearest enemy.\n" +
         "4. <b>War report</b>  See what the enemy sent and how it went. Enter for the next wave.\n\n" +
-        "<b>The enemy learns (the ML part)</b>\n" +
-        "The enemy is led by the War Council, a learning AI. Each wave it picks 1 of 16 attack plans: " +
+        "<b>The War Council</b>\n" +
+        "The enemy is led by the War Council. Each wave it picks 1 of 16 attack plans: " +
         "an army (Grunts, Runners, Shields or Flyers) and where to send it (left, middle, right or all lanes). " +
-        "It looks at how you play, your towers, your weapon and the lane you guard, and after the wave it scores how well its plan did. " +
-        "Over time it sends more of what beats you, and still tries something new now and then. Change your defence to stay ahead.";
+        "The banner at the start of the wave tells you what is coming, so change your defence to match.";
 
     static TitleView TitlePanel(Transform root)
     {
@@ -922,7 +932,7 @@ public static class GatekeeperProjectSetup
         var title = Label("Title", screen, Center, Center, new Vector2(0f, 230f), new Vector2(1600f, 160f), 120, TextAlignmentOptions.Center, "The Last Gatekeeper");
         title.fontStyle = FontStyles.Bold;
         title.color = GateOrange;
-        Label("Tagline", screen, Center, Center, new Vector2(0f, 120f), new Vector2(1400f, 60f), 34, TextAlignmentOptions.Center, "Hold the gate. The enemy learns how you play.");
+        Label("Tagline", screen, Center, Center, new Vector2(0f, 120f), new Vector2(1400f, 60f), 34, TextAlignmentOptions.Center, "Hold the gate against the War Council.");
         Icon("Gate Icon", screen, Art("Icons/Castle"), new Vector2(0f, 400f), 110f);
 
         var start = ButtonAt("Start Button", screen, Vector2.zero, new Vector2(460f, 110f), "<b>Start</b>", 52, out _);

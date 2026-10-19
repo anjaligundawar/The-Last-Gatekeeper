@@ -18,6 +18,8 @@ namespace Gatekeeper
         [SerializeField] Sprite[] attack = new Sprite[4];
         [SerializeField] float frameTime = 0.14f;
         [SerializeField] float attackTime = 0.2f;
+        [Tooltip("Seconds without movement before the walk stops. Physics moves the body in fixed steps, so some frames see no movement even while walking.")]
+        [SerializeField] float stopDelay = 0.1f;
         [Tooltip("Keep flapping when standing still (flyers).")]
         [SerializeField] bool alwaysAnimate;
 
@@ -26,10 +28,15 @@ namespace Gatekeeper
         float frameTimer;
         int frame;
         float attackTimer;
+        float stillTimer;
 
         public Vector2 Facing => facing;
 
-        void Awake() => lastPosition = transform.position;
+        void Awake()
+        {
+            lastPosition = transform.position;
+            stillTimer = stopDelay;
+        }
 
         public void PlayAttack(Vector2 direction)
         {
@@ -42,8 +49,10 @@ namespace Gatekeeper
             Vector2 position = transform.position;
             var delta = position - lastPosition;
             lastPosition = position;
-            bool moving = delta.sqrMagnitude > 0.000001f;
-            if (moving && attackTimer <= 0f) facing = delta;
+            bool movedThisFrame = delta.sqrMagnitude > 0.000001f;
+            if (movedThisFrame && attackTimer <= 0f) facing = delta;
+            stillTimer = movedThisFrame ? 0f : stillTimer + Time.deltaTime;
+            bool moving = stillTimer < stopDelay;
 
             int dir = Direction(facing);
             if (attackTimer > 0f)

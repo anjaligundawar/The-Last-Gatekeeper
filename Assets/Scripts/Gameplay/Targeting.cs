@@ -7,7 +7,7 @@ namespace Gatekeeper
     public static class Targeting
     {
         static readonly List<Collider2D> hits = new List<Collider2D>();
-        static readonly ContactFilter2D filter = new ContactFilter2D().NoFilter();
+        static readonly ContactFilter2D filter = ContactFilter2D.noFilter;
 
         static bool Valid(Enemy e, bool hitsAir) => e != null && !e.IsDead && (hitsAir || !e.IsFlying);
 
