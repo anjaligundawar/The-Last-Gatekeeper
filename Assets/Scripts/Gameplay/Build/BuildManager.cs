@@ -1,4 +1,3 @@
-using Gatekeeper.AI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -55,21 +54,14 @@ namespace Gatekeeper
             foreach (var spot in spots) Remove(spot);
         }
 
-        public void WriteSnapshot(DefenseSnapshot snapshot)
-        {
-            foreach (var spot in spots)
-                snapshot.Spots[spot.Index] = spot.IsEmpty ? (TowerType?)null : spot.Tower.Data.type;
-        }
-
         void Update()
         {
             var gm = GameManager.Instance;
             bool buildPhase = gm != null && gm.Phase == GamePhase.Build;
-            bool playerBuilding = buildPhase && !config.botMode;
 
-            hovered = playerBuilding ? SpotUnderMouse() : null;
+            hovered = buildPhase ? SpotUnderMouse() : null;
             foreach (var spot in spots) spot.SetHighlight(spot == hovered, buildPhase);
-            if (!playerBuilding) return;
+            if (!buildPhase) return;
 
             var keyboard = Keyboard.current;
             if (keyboard != null)

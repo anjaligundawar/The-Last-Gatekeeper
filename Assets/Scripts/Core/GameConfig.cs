@@ -1,4 +1,3 @@
-using Gatekeeper.AI;
 using UnityEngine;
 
 namespace Gatekeeper
@@ -26,26 +25,8 @@ namespace Gatekeeper
         public float hpScalePerWave = 0.08f;
         public float spawnInterval = 0.6f;
 
-        [Header("War Council (ML)")]
-        public PolicyKind policy = PolicyKind.Random;
-        public float linUcbAlpha = 1f;
-        [Tooltip("Arm used by the Fixed policy (0..15).")]
-        public int fixedArm;
-        [Tooltip("Waves at the start of a run that use random plans to gather data.")]
-        public int randomWarmupWaves = 2;
-        [Tooltip("Keep what the Council learned when the player restarts.")]
-        public bool keepPolicyOnRestart = true;
+        [Header("Randomness")]
         [Tooltip("0 = random seed each run.")]
         public int seed;
-
-        [Header("Telemetry")]
-        public bool logTelemetry = true;
-        public string telemetryFile = "telemetry.csv";
-
-        [Header("Bot mode (evaluation)")]
-        public bool botMode;
-        public float botTimeScale = 10f;
-        public int botRuns = 20;
-        public int botWavesPerRun = 15;
     }
 }

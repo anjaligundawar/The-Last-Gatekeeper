@@ -506,7 +506,6 @@ public static class GatekeeperProjectSetup
         var manager = game.AddComponent<GameManager>();
         var build = game.AddComponent<BuildManager>();
         var spawner = game.AddComponent<WaveSpawner>();
-        var bots = game.AddComponent<BotDirector>();
 
         Set(build, "config", data.config);
         SetArray(build, "spots", spots.ToArray());
@@ -526,9 +525,6 @@ public static class GatekeeperProjectSetup
         Set(manager, "build", build);
         Set(manager, "spawner", spawner);
         Set(manager, "cameraShake", shake);
-
-        Set(bots, "game", manager);
-        SetBotPersonas(bots);
 
         CreateUI();
 
@@ -552,12 +548,10 @@ public static class GatekeeperProjectSetup
         }
 
         // The lane itself is painted on the Ground tilemap (see PaintGround).
-        var heat = SpriteObject("Heat", go.transform, circle, new Color(1f, 0.2f, 0.1f, 0f), PointAt(points, 0.35f, out _), new Vector2(2.6f, 2.6f), -45);
 
         var lane = go.AddComponent<LanePath>();
         SetInt(lane, "laneIndex", index);
         SetArray(lane, "waypoints", waypoints);
-        Set(lane, "heatOverlay", heat);
         return lane;
     }
 
@@ -739,37 +733,6 @@ public static class GatekeeperProjectSetup
             }
     }
 
-    static void SetBotPersonas(BotDirector bots)
-    {
-        var so = new SerializedObject(bots);
-        var list = so.FindProperty("personas");
-        var personas = new[]
-        {
-            ("Cannon Turtle", WeaponType.Sword, 0, new[] { (0, TowerType.Cannon), (1, TowerType.Cannon), (2, TowerType.Cannon), (3, TowerType.Frost), (4, TowerType.Frost), (5, TowerType.Frost) }),
-            ("Archer Line", WeaponType.Bow, 1, new[] { (3, TowerType.Archer), (4, TowerType.Archer), (5, TowerType.Archer), (6, TowerType.Cannon), (7, TowerType.Cannon), (8, TowerType.Cannon) }),
-            ("Spread", WeaponType.Spear, 2, new[] { (0, TowerType.Archer), (4, TowerType.Cannon), (8, TowerType.Frost), (7, TowerType.Archer), (1, TowerType.Cannon), (5, TowerType.Frost) }),
-        };
-        list.arraySize = personas.Length;
-        for (int i = 0; i < personas.Length; i++)
-        {
-            var (name, weapon, lane, placements) = personas[i];
-            var p = list.GetArrayElementAtIndex(i);
-            p.FindPropertyRelative("name").stringValue = name;
-            p.FindPropertyRelative("weapon").enumValueIndex = (int)weapon;
-            p.FindPropertyRelative("favouriteLane").intValue = lane;
-            p.FindPropertyRelative("noise").floatValue = 0.1f;
-            var pl = p.FindPropertyRelative("placements");
-            pl.arraySize = placements.Length;
-            for (int j = 0; j < placements.Length; j++)
-            {
-                var e = pl.GetArrayElementAtIndex(j);
-                e.FindPropertyRelative("spot").intValue = placements[j].Item1;
-                e.FindPropertyRelative("tower").enumValueIndex = (int)placements[j].Item2;
-            }
-        }
-        so.ApplyModifiedPropertiesWithoutUndo();
-    }
-
     // --------------------------------------------------------------------- UI
 
     static void CreateUI()
@@ -795,7 +758,6 @@ public static class GatekeeperProjectSetup
         Set(ui, "intentBanner", IntentPanel(root));
         Set(ui, "reportPanel", ReportPanel(root));
         Set(ui, "gameOverPanel", GameOverPanel(root));
-        Set(ui, "brainPanel", BrainPanel(root));
     }
 
     static readonly Vector2 TopLeft = new Vector2(0f, 1f);
@@ -928,36 +890,6 @@ public static class GatekeeperProjectSetup
         Set(view, "summaryText", summary);
         Set(view, "reportText", report);
         Set(view, "restartButton", button);
-        panel.gameObject.SetActive(false);
-        return view;
-    }
-
-    static BrainPanelView BrainPanel(Transform root)
-    {
-        var panel = Panel("Brain Panel", root, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-20f, -40f), new Vector2(640f, 780f));
-        var title = Label("Title", panel, TopLeft, TopLeft, new Vector2(20f, -15f), new Vector2(600f, 46f), 30, TextAlignmentOptions.Left, "AI brain");
-        title.fontStyle = FontStyles.Bold;
-        var info = Label("Info", panel, TopLeft, TopLeft, new Vector2(20f, -62f), new Vector2(600f, 60f), 18, TextAlignmentOptions.TopLeft, "");
-
-        var rows = new BrainRow[16];
-        for (int a = 0; a < rows.Length; a++)
-        {
-            var row = RectObject("Row " + a, panel, TopLeft, TopLeft, new Vector2(20f, -130f - a * 39f), new Vector2(600f, 36f));
-            var label = Label("Label", row, TopLeft, TopLeft, Vector2.zero, new Vector2(270f, 36f), 18, TextAlignmentOptions.Left, "");
-            var area = Panel("Bar Area", row, TopLeft, TopLeft, new Vector2(275f, -6f), new Vector2(325f, 24f));
-            Plain(area.GetComponent<Image>(), new Color(1f, 1f, 1f, 0.06f));
-            var mean = Plain(Panel("Mean", area, TopLeft, TopLeft, Vector2.zero, Vector2.zero).GetComponent<Image>(), Color.white);
-            var bonus = Plain(Panel("Bonus", area, TopLeft, TopLeft, Vector2.zero, Vector2.zero).GetComponent<Image>(), Color.white);
-            rows[a] = row.gameObject.AddComponent<BrainRow>();
-            Set(rows[a], "label", label);
-            Set(rows[a], "meanBar", mean);
-            Set(rows[a], "bonusBar", bonus);
-        }
-
-        var view = panel.gameObject.AddComponent<BrainPanelView>();
-        Set(view, "titleText", title);
-        Set(view, "infoText", info);
-        SetArray(view, "rows", rows);
         panel.gameObject.SetActive(false);
         return view;
     }

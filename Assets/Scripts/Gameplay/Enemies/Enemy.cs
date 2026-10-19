@@ -45,7 +45,6 @@ namespace Gatekeeper
         public bool IsFlying => data.flying;
         public bool IsDead => Health == null || Health.IsDead;
         public Vector2 Position => body2D.position;
-        public float MaxProgress { get; private set; }
         public bool ReachedGate { get; private set; }
 
         Rigidbody2D body2D;
@@ -103,7 +102,6 @@ namespace Gatekeeper
                 return;
             }
             state.Tick(this, Time.fixedDeltaTime);
-            if (!ReachedGate) MaxProgress = Mathf.Max(MaxProgress, Lane.Progress(Position, WaypointIndex));
         }
 
         void Update()
@@ -139,7 +137,6 @@ namespace Gatekeeper
         public void MarkReachedGate()
         {
             ReachedGate = true;
-            MaxProgress = 1f;
         }
 
         public void Lunge() => lungeTimer = 0.12f;

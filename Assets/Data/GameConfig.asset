@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c81bf8a3f529834b8a6976d4b8f3ae7, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Assembly-CSharp::Gatekeeper.GameConfig
+  buildTime: 30
+  weaponPickTime: 10
+  waveTimeout: 120
+  intentBannerTime: 4
+  maxDefences: 6
+  maxPerType: 3
+  heroHealBetweenWaves: 0.5
+  startBudget: 10
+  budgetPerWave: 4
+  hpScalePerWave: 0.08
+  spawnInterval: 0.6
+  policy: 0
+  linUcbAlpha: 1
+  fixedArm: 0
+  randomWarmupWaves: 2
+  keepPolicyOnRestart: 1
+  seed: 0
+  logTelemetry: 1
+  telemetryFile: telemetry.csv
+  botMode: 0
+  botTimeScale: 10
+  botRuns: 20
+  botWavesPerRun: 15

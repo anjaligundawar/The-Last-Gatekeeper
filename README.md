@@ -1,6 +1,6 @@
 # The Last Gatekeeper
 
-A 2D top-down gate-defense game where the enemy learns your strategy with a LinUCB contextual bandit and adapts every wave. Built in Unity.
+A 2D top-down gate-defense game where the enemy learns your strategy and adapts every wave. Built in Unity.
 
 ## How to play
 
@@ -20,7 +20,6 @@ You lose when the gate or the hero falls. Score = kills × 10 + waves survived �
 | 1 / 2 / 3 | Pick a defence (build) or a weapon (weapon pick) |
 | Left / right click | Place / remove a defence |
 | Enter | Ready / next wave |
-| Tab | Toggle the AI brain panel |
 | R | Restart after game over |
 
 ## Project setup
@@ -41,33 +40,15 @@ Environment, towers, projectiles, icons and UI are 16 px pixel art in `Assets/Ar
 
 ```
 Assets/Scripts/
-  AI/         The ML: context encoding, reward, policies (Random, Fixed, LinUCB), war report text. Pure C#, no Unity dependency.
   Core/       GameManager (Build → WeaponPick → Wave → Report → GameOver), GameConfig, camera shake
   Gameplay/   Hero and weapons, enemies and their state machine, towers, projectiles, map, waves
-  UI/         HUD, build/weapon/report/game-over panels, AI brain panel
-  Telemetry/  CSV logger, one row per wave
-  Bots/       Scripted defenders for evaluating the AI
-Assets/Tests/EditMode/  Unit tests for the AI assembly
+  UI/         HUD, build/weapon/report/game-over panels
 ```
 
 ### Enemy state machine
 
 `March` follows the lane waypoints. When the hero is within `detectRange` the enemy switches to `Chase`, and to `Attack` once it's in reach. It returns to `March` when the hero is beyond `loseRange`; the gap between the two ranges prevents flickering. At the gate it switches to `AttackGate`. Flyers never chase. Each state has its own tint and icon.
 
-## The War Council (ML)
+## The War Council
 
-The enemy chooses one of **16 attack plans** each wave (4 army types × 4 lane focuses) using a **disjoint LinUCB contextual bandit**.
-
-- **Context x (d = 34):** which tower is on each of the 9 spots (27 one-hot features), the weapon (3), the fraction of the last wave the hero spent in each lane (3), and a bias (1). See `ContextEncoder.cs`.
-- **Reward (0 to 1):** 0.6 × gate damage share + 0.2 × hero damage share + 0.2 × average enemy progress. See `WaveOutcome.cs`.
-- **Policy:** `p_a = θ_aᵀx + α·√(xᵀA_a⁻¹x)`, with A_a⁻¹ kept up to date using Sherman–Morrison.
-
-`LinUCBPolicy.cs` is a stub to implement. Until it's done, the game falls back to random plans and logs a warning. The EditMode tests in `LinUCBTests.cs` define "done" (Window > General > Test Runner). Once they pass, set **GameConfig > Policy = LinUCB**. The brain panel and the war report then show the model's learned weights.
-
-Tip: with only 16 arms and short runs, an `alpha` of around 0.3 to 0.5 explores less wildly than 1.0.
-
-### Evaluation
-
-Every wave is appended to `telemetry.csv` in `Application.persistentDataPath`. Columns: run, wave, policy, plan, reward, outcome and the full context vector.
-
-To compare policies, tick **GameConfig > Bot Mode**. Three scripted bot defenders, each with a habit, then play `botRuns` runs at `botTimeScale` speed. Run it once per policy (Random, Fixed, LinUCB) and plot the reward per wave from the CSV.
+The enemy picks one of **16 attack plans** each wave (4 army types × 4 lane focuses). For now it picks at random.

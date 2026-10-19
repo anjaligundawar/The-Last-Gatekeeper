@@ -20,7 +20,6 @@ namespace Gatekeeper
         Color baseColor;
         Vector2 moveInput;
         float flash;
-        readonly float[] laneTime = new float[MapConstants.LaneCount];
 
         void Awake()
         {
@@ -43,11 +42,7 @@ namespace Gatekeeper
                 if (moveInput.sqrMagnitude > 0.01f) Facing = moveInput.normalized;
             }
 
-            if (gm.Phase == GamePhase.Wave)
-            {
-                laneTime[LanePath.LaneOfX(Position.x)] += Time.deltaTime;
-                Combat.Tick(Time.deltaTime);
-            }
+            if (gm.Phase == GamePhase.Wave) Combat.Tick(Time.deltaTime);
 
             if (flash > 0f) flash -= Time.deltaTime;
             body.color = flash > 0f ? hurtColor : baseColor;
@@ -66,19 +61,5 @@ namespace Gatekeeper
             phase == GamePhase.Build || phase == GamePhase.WeaponPick || phase == GamePhase.Wave;
 
         public void TakeDamage(float amount) => Health.Damage(amount);
-
-        /// <summary>Fraction of the last wave spent in each lane; resets the counter.</summary>
-        public float[] ConsumeLaneTime()
-        {
-            float total = 0f;
-            foreach (var t in laneTime) total += t;
-            var fractions = new float[laneTime.Length];
-            for (int i = 0; i < laneTime.Length; i++)
-            {
-                fractions[i] = total > 0f ? laneTime[i] / total : 0f;
-                laneTime[i] = 0f;
-            }
-            return fractions;
-        }
     }
 }
