@@ -25,6 +25,12 @@ namespace Gatekeeper
         [Tooltip("1 = normal knockback, 0 = can't be pushed.")]
         public float knockbackScale = 1f;
 
+        [Header("Weapon")]
+        [Tooltip("Sword swings on a pivot, Sphere flies out and back, Bow shoots an arrow.")]
+        public EnemyWeapon weapon = EnemyWeapon.Sword;
+        [Tooltip("How hard this enemy's hits push the hero, in units per second.")]
+        public float hitKnockback = 5f;
+
         [Header("Behaviour (detect < lose, so enemies don't flicker between states)")]
         public float detectRange = 3f;
         public float loseRange = 5f;

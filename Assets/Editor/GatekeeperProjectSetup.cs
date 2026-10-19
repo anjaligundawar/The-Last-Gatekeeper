@@ -197,34 +197,35 @@ public static class GatekeeperProjectSetup
     static DataSet CreateData()
     {
         var set = new DataSet();
-        set.config = Asset<GameConfig>(DataFolder + "/GameConfig.asset", c => { });
+        set.config = Asset<GameConfig>(DataFolder + "/GameConfig.asset", c => c.heroHealBetweenWaves = 0f);
 
         set.enemies = new[]
         {
-            Asset<EnemyData>(DataFolder + "/Enemies/Grunt.asset", e => FillEnemy(e, EnemyType.Grunt, "Grunt", 30, 1.4f, 5, 1f, 1, false, 1f, 1f)),
-            Asset<EnemyData>(DataFolder + "/Enemies/Runner.asset", e => FillEnemy(e, EnemyType.Runner, "Runner", 15, 2.8f, 3, 0.7f, 1, false, 1f, 1f)),
-            Asset<EnemyData>(DataFolder + "/Enemies/Shield.asset", e => { FillEnemy(e, EnemyType.Shield, "Shield", 60, 1f, 6, 1.2f, 2, false, 0.25f, 1.25f); e.knockbackScale = 0.4f; }),
-            Asset<EnemyData>(DataFolder + "/Enemies/Flyer.asset", e => FillEnemy(e, EnemyType.Flyer, "Flyer", 20, 1.8f, 4, 1f, 2, true, 1f, 1f)),
+            Asset<EnemyData>(DataFolder + "/Enemies/Grunt.asset", e => FillEnemy(e, EnemyType.Grunt, "Grunt", 30, 1.4f, 5, 1f, 1, false, 1f, 1f, EnemyWeapon.Sword, 5f)),
+            // Runners shoot from a little further away.
+            Asset<EnemyData>(DataFolder + "/Enemies/Runner.asset", e => { FillEnemy(e, EnemyType.Runner, "Runner", 15, 2.8f, 3, 0.7f, 1, false, 1f, 1f, EnemyWeapon.Bow, 3f); e.attackRange = 2.2f; }),
+            Asset<EnemyData>(DataFolder + "/Enemies/Shield.asset", e => { FillEnemy(e, EnemyType.Shield, "Shield", 60, 1f, 6, 1.2f, 2, false, 0.25f, 1.25f, EnemyWeapon.Sphere, 8f); e.knockbackScale = 0.4f; }),
+            Asset<EnemyData>(DataFolder + "/Enemies/Flyer.asset", e => FillEnemy(e, EnemyType.Flyer, "Flyer", 20, 1.8f, 4, 1f, 2, true, 1f, 1f, EnemyWeapon.Bow, 3f)),
         };
 
         set.towers = new[]
         {
             Asset<TowerData>(DataFolder + "/Towers/Archer.asset", t =>
             {
-                t.type = TowerType.Archer; t.displayName = "Archer"; t.description = "Single target, hits air";
-                t.uiColor = new Color(0.45f, 0.85f, 0.45f); t.range = 3.5f; t.interval = 0.8f; t.damage = 8;
+                t.type = TowerType.Archer; t.displayName = "Archer"; t.description = "Long range, slow reload. Single target, hits air";
+                t.uiColor = new Color(0.45f, 0.85f, 0.45f); t.range = 5f; t.interval = 1.6f; t.damage = 14;
                 t.damageType = DamageType.Arrow; t.hitsAir = true; t.splashRadius = 0; t.slowFactor = 1; t.slowDuration = 0;
             }),
             Asset<TowerData>(DataFolder + "/Towers/Cannon.asset", t =>
             {
-                t.type = TowerType.Cannon; t.displayName = "Cannon"; t.description = "Splash damage, ground only";
-                t.uiColor = new Color(0.7f, 0.7f, 0.7f); t.range = 3.2f; t.interval = 1.8f; t.damage = 14;
+                t.type = TowerType.Cannon; t.displayName = "Cannon"; t.description = "Medium range and reload. Splash damage, ground only";
+                t.uiColor = new Color(0.7f, 0.7f, 0.7f); t.range = 3.5f; t.interval = 1.1f; t.damage = 12;
                 t.damageType = DamageType.Explosive; t.hitsAir = false; t.splashRadius = 1f; t.slowFactor = 1; t.slowDuration = 0;
             }),
             Asset<TowerData>(DataFolder + "/Towers/Frost.asset", t =>
             {
-                t.type = TowerType.Frost; t.displayName = "Frost"; t.description = "Slows ground enemies";
-                t.uiColor = new Color(0.55f, 0.9f, 1f); t.range = 2.5f; t.interval = 1f; t.damage = 3;
+                t.type = TowerType.Frost; t.displayName = "Frost"; t.description = "Short range, fast reload. Slows ground enemies";
+                t.uiColor = new Color(0.55f, 0.9f, 1f); t.range = 2f; t.interval = 0.5f; t.damage = 2;
                 t.damageType = DamageType.Frost; t.hitsAir = false; t.splashRadius = 0; t.slowFactor = 0.5f; t.slowDuration = 1.5f;
             }),
         };
@@ -234,29 +235,30 @@ public static class GatekeeperProjectSetup
             Asset<WeaponData>(DataFolder + "/Weapons/Bow.asset", w =>
             {
                 w.type = WeaponType.Bow; w.displayName = "Bow"; w.description = "Long range, low damage, hits flyers";
-                w.range = 6f; w.cooldown = 0.45f; w.damage = 8; w.damageType = DamageType.Arrow; w.hitsAir = true; w.width = 0;
+                w.range = 6f; w.cooldown = 0.7f; w.damage = 8; w.damageType = DamageType.Arrow; w.hitsAir = true; w.width = 0;
             }),
             Asset<WeaponData>(DataFolder + "/Weapons/Sword.asset", w =>
             {
                 w.type = WeaponType.Sword; w.displayName = "Sword"; w.description = "Short range, high damage, can't hit flyers";
-                w.range = 1.3f; w.cooldown = 0.4f; w.damage = 18; w.damageType = DamageType.Physical; w.hitsAir = false; w.width = 0;
+                w.range = 1.3f; w.cooldown = 0.6f; w.damage = 18; w.damageType = DamageType.Physical; w.hitsAir = false; w.width = 0;
             }),
             Asset<WeaponData>(DataFolder + "/Weapons/Spear.asset", w =>
             {
                 w.type = WeaponType.Spear; w.displayName = "Spear"; w.description = "Medium range, pierces a line of enemies";
-                w.range = 2.8f; w.cooldown = 0.6f; w.damage = 12; w.damageType = DamageType.Physical; w.hitsAir = true; w.width = 0.5f;
+                w.range = 2.8f; w.cooldown = 0.8f; w.damage = 12; w.damageType = DamageType.Physical; w.hitsAir = true; w.width = 0.5f;
             }),
         };
         return set;
     }
 
     static void FillEnemy(EnemyData e, EnemyType type, string name, float hp, float speed, float damage, float interval, int cost,
-        bool flying, float arrowMultiplier, float explosiveMultiplier)
+        bool flying, float arrowMultiplier, float explosiveMultiplier, EnemyWeapon weapon, float hitKnockback)
     {
         e.type = type; e.displayName = name; e.maxHp = hp; e.speed = speed; e.damage = damage; e.attackInterval = interval;
         e.cost = cost; e.flying = flying; e.arrowMultiplier = arrowMultiplier; e.explosiveMultiplier = explosiveMultiplier;
         e.detectRange = 3f; e.loseRange = 5f; e.attackRange = 0.8f;
         e.knockbackScale = 1f;
+        e.weapon = weapon; e.hitKnockback = hitKnockback;
     }
 
     static T Asset<T>(string path, System.Action<T> fill) where T : ScriptableObject
@@ -296,8 +298,8 @@ public static class GatekeeperProjectSetup
         var thrustFx = Effect("Fx_SpearThrust", Art("Effects/Thrust"), new Color(1f, 1f, 1f, 0.6f), 0.1f);
         var frostFx = Effect("Fx_FrostPulse", ring, new Color(FrostCyan.r, FrostCyan.g, FrostCyan.b, 0.6f), 0.3f);
 
-        var arrow = ProjectilePrefab("Arrow", Art("Projectiles/Arrow"), 12f, 1.5f, null);
-        var cannonball = ProjectilePrefab("Cannonball", Art("Projectiles/Cannonball"), 7f, 3f, explosionFx);
+        var arrow = ProjectilePrefab("Arrow", Art("Projectiles/Arrow"), 12f, 3f, null);
+        var cannonball = ProjectilePrefab("Cannonball", Art("Projectiles/Cannonball"), 7f, 4f, explosionFx);
 
         var set = new PrefabSet { enemies = new Enemy[4], towers = new Tower[3] };
         for (int i = 0; i < 4; i++)
@@ -399,7 +401,42 @@ public static class GatekeeperProjectSetup
         Set(enemy, "chaseIcon", Art("Icons/State_Chase"));
         Set(enemy, "attackIcon", Art("Icons/State_Attack"));
         Set(enemy, "attackGateIcon", Art("Icons/State_AttackGate"));
+        AddEnemyWeapon(go, data, new Vector2(0f, feet + 0.45f), body.sortingOrder + 1);
         return SavePrefab(go, PrefabFolder + "/Enemies/" + data.displayName + ".prefab").GetComponent<Enemy>();
+    }
+
+    // Weapon on a pivot at the enemy's centre; EnemyWeaponVisual swings it, throws the sphere or shoots the arrow.
+    static void AddEnemyWeapon(GameObject go, EnemyData data, Vector2 centre, int order)
+    {
+        var pivot = new GameObject("WeaponPivot").transform;
+        pivot.SetParent(go.transform, false);
+        pivot.localPosition = centre;
+        string art = data.weapon == EnemyWeapon.Sphere ? "Projectiles/Cannonball" : data.weapon == EnemyWeapon.Bow ? "Weapons/Bow" : "Weapons/Sword";
+        var weapon = SpriteObject("Weapon", pivot, Art(art), Color.white, new Vector2(0.3f, 0f), Vector2.one * 0.8f, order);
+        if (flashMaterial != null) weapon.sharedMaterial = flashMaterial;
+
+        var visual = go.AddComponent<EnemyWeaponVisual>();
+        Set(visual, "pivot", pivot);
+        Set(visual, "weaponRenderer", weapon);
+        if (data.weapon == EnemyWeapon.Bow)
+        {
+            var arrow = SpriteObject("Arrow", go.transform, Art("Projectiles/Arrow"), Color.white, centre, Vector2.one * 0.8f, 30);
+            if (flashMaterial != null) arrow.sharedMaterial = flashMaterial;
+            Set(visual, "arrow", arrow);
+        }
+    }
+
+    // A thin bar that fills while the source reloads (CooldownBar hides it when ready).
+    static void AddCooldownBar(Transform parent, MonoBehaviour source, Vector2 position, float width, Color color)
+    {
+        var root = new GameObject("CooldownBar");
+        root.transform.SetParent(parent, false);
+        root.transform.localPosition = position;
+        var back = SpriteObject("Background", root.transform, square, Ink, Vector2.zero, new Vector2(width, 0.07f), 41);
+        var fill = SpriteObject("Fill", back.transform, square, color, Vector2.zero, Vector2.one, 42);
+        var bar = root.AddComponent<CooldownBar>();
+        Set(bar, "source", source);
+        Set(bar, "fill", fill.transform);
     }
 
     // Walk frames (4 per direction) and optional attack frames, sliced from the Ninja Adventure sheets.
@@ -436,6 +473,7 @@ public static class GatekeeperProjectSetup
         Set(tower, "rangeIndicator", range);
         Set(tower, "projectilePrefab", projectile);
         Set(tower, "pulseEffect", pulse);
+        AddCooldownBar(go.transform, tower, new Vector2(0f, -0.6f), 0.7f, data.uiColor);
         return SavePrefab(go, PrefabFolder + "/Towers/" + data.displayName + ".prefab").GetComponent<Tower>();
     }
 
@@ -449,6 +487,7 @@ public static class GatekeeperProjectSetup
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         go.AddComponent<CircleCollider2D>().radius = 0.3f;
         var body = SpriteObject("Body", go.transform, Art("Characters/Hero/Walk_Down_0"), Color.white, new Vector2(0f, -0.45f), Vector2.one, 20);
+        if (flashMaterial != null) body.sharedMaterial = flashMaterial;
         AddAnimator(go, body, "Characters/Hero", alwaysAnimate: false);
         SpriteObject("Shadow", go.transform, Art("Effects/Shadow"), Color.white, new Vector2(0f, -0.45f), Vector2.one, 19);
 
@@ -456,6 +495,7 @@ public static class GatekeeperProjectSetup
         var pivot = new GameObject("WeaponPivot").transform;
         pivot.SetParent(go.transform, false);
         var weapon = SpriteObject("Weapon", pivot, Art("Weapons/Bow"), Color.white, new Vector2(0.35f, 0f), Vector2.one, 21);
+        if (flashMaterial != null) weapon.sharedMaterial = flashMaterial;
         var visual = go.AddComponent<HeroWeaponVisual>();
         Set(visual, "pivot", pivot);
         Set(visual, "weaponRenderer", weapon);
@@ -466,6 +506,7 @@ public static class GatekeeperProjectSetup
         Set(combat, "arrowPrefab", arrow);
         Set(combat, "slashEffect", slash);
         Set(combat, "thrustEffect", thrust);
+        AddCooldownBar(go.transform, combat, new Vector2(0f, -0.62f), 0.6f, Color.white);
 
         var hero = go.AddComponent<Hero>();
         Set(hero, "body", body);
@@ -664,6 +705,23 @@ public static class GatekeeperProjectSetup
                     tilemap.SetTile(cell, grassTiles[h % 3 == 0 ? h % 4 : 0]);
                 }
             }
+
+        // An invisible tilemap over every grass cell, merged into one collider, keeps the
+        // hero and ground enemies on the lanes (see LaneEdge).
+        var edgeTile = Asset<Tile>(TileFolder + "/LaneEdge.asset", t => { t.sprite = null; t.colliderType = Tile.ColliderType.Grid; });
+        var edges = new GameObject("Lane Edges");
+        edges.transform.SetParent(grid.transform, false);
+        var edgeMap = edges.AddComponent<Tilemap>();
+        for (int y = MapMinY - 1; y <= MapMaxY; y++)
+            for (int x = MapMinX - 1; x <= MapMaxX; x++)
+                if (!IsPath(x, y)) edgeMap.SetTile(new Vector3Int(x, y, 0), edgeTile);
+        var edgeBody = edges.AddComponent<Rigidbody2D>();
+        edgeBody.bodyType = RigidbodyType2D.Static;
+        var tileCollider = edges.AddComponent<TilemapCollider2D>();
+        tileCollider.compositeOperation = Collider2D.CompositeOperation.Merge;
+        var composite = edges.AddComponent<CompositeCollider2D>();
+        composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
+        edges.AddComponent<LaneEdge>();
     }
 
     // A Rule Tile with one rule per combination of path neighbours (up, right, down, left),
@@ -916,9 +974,10 @@ public static class GatekeeperProjectSetup
         "<b>Goal</b>\n" +
         "Keep the gate standing. The run ends when the gate or you (the Gatekeeper) fall.\n\n" +
         "<b>Every wave has 4 steps</b>\n" +
-        "1. <b>Build</b>  Press 1, 2 or 3 to pick Archer, Cannon or Frost. Left click a spot to place it, right click to remove it. Enter when ready.\n" +
+        "1. <b>Build</b>  Press 1, 2 or 3 to pick Archer, Cannon or Frost. Left click a spot to place it, right click to remove it. Enter when ready. " +
+        "Archer reaches far but reloads slowly, Cannon is in between, Frost is short range and fires fast.\n" +
         "2. <b>Weapon</b>  Press 1 Bow (long range), 2 Sword (wide swing) or 3 Spear (long poke).\n" +
-        "3. <b>Fight</b>  WASD to move, Space or J to attack. Attacks aim at the nearest enemy.\n" +
+        "3. <b>Fight</b>  WASD to move, Space or J to attack. Attacks aim at the nearest enemy. The bar under you fills while your weapon reloads.\n" +
         "4. <b>War report</b>  See what the enemy sent and how it went. Enter for the next wave.\n\n" +
         "<b>The War Council</b>\n" +
         "The enemy is led by the War Council. Each wave it picks 1 of 16 attack plans: " +

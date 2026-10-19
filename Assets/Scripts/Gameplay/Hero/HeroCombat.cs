@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Gatekeeper
 {
     /// <summary>Weapon logic. Attacks auto-aim at the nearest valid enemy in range.</summary>
-    public class HeroCombat : MonoBehaviour
+    public class HeroCombat : MonoBehaviour, ICooldown
     {
         [Tooltip("Indexed by WeaponType: Bow, Sword, Spear.")]
         [SerializeField] WeaponData[] weapons = new WeaponData[3];
@@ -11,16 +11,20 @@ namespace Gatekeeper
         [SerializeField] FadeOut slashEffect;
         [SerializeField] FadeOut thrustEffect;
         [Tooltip("Knockback speed for melee hits, in units per second.")]
-        [SerializeField] float swordKnockback = 4f;
-        [SerializeField] float spearKnockback = 3f;
+        [SerializeField] float swordKnockback = 7f;
+        [SerializeField] float spearKnockback = 6f;
 
         public WeaponType Weapon { get; set; } = WeaponType.Bow;
         public WeaponData Current => weapons[(int)Weapon];
         public WeaponData Get(WeaponType type) => weapons[(int)type];
 
+        /// <summary>1 right after an attack, falling to 0 when the hero can attack again.</summary>
+        public float CooldownFraction => cooldownLength > 0f ? Mathf.Clamp01(cooldown / cooldownLength) : 0f;
+
         Hero hero;
         HeroWeaponVisual visual;
         float cooldown;
+        float cooldownLength;
 
         void Awake()
         {
@@ -32,7 +36,7 @@ namespace Gatekeeper
         {
             if (cooldown > 0f) cooldown -= dt;
             if (cooldown > 0f || !hero.Input.AttackHeld) return;
-            if (Attack(Current)) cooldown = Current.cooldown;
+            if (Attack(Current)) cooldown = cooldownLength = Current.cooldown;
         }
 
         bool Attack(WeaponData weapon)

@@ -49,6 +49,7 @@ namespace Gatekeeper
 
         Rigidbody2D body2D;
         CharacterAnimator animator;
+        EnemyWeaponVisual weapon;
         IEnemyState state = EnemyStates.March;
         Color baseColor;
         Color displayColor;
@@ -60,6 +61,9 @@ namespace Gatekeeper
         bool removed;
         Vector2 knockback;
         float knockbackTimer;
+        bool hitPending;
+        bool hitOnGate;
+        float hitTimer;
         MaterialPropertyBlock flashBlock;
         bool hasFlashMaterial;
 
@@ -70,6 +74,7 @@ namespace Gatekeeper
             Health = GetComponent<Health>();
             body2D = GetComponent<Rigidbody2D>();
             animator = GetComponent<CharacterAnimator>();
+            weapon = GetComponent<EnemyWeaponVisual>();
             Health.Died += OnDied;
             baseColor = displayColor = body.color;
             baseScale = body.transform.localScale;
@@ -99,7 +104,7 @@ namespace Gatekeeper
             {
                 // Pushed back: slide and skip the state machine until the push ends.
                 float t = knockbackTimer / knockbackDuration;
-                body2D.MovePosition(Position + knockback * t * Time.fixedDeltaTime);
+                Step(knockback * t * Time.fixedDeltaTime);
                 knockbackTimer -= Time.fixedDeltaTime;
                 return;
             }
@@ -112,6 +117,11 @@ namespace Gatekeeper
             if (slowTimer > 0f) slowTimer -= dt;
             if (flashTimer > 0f) flashTimer -= dt;
             if (lungeTimer > 0f) lungeTimer -= dt;
+            if (hitPending && !IsDead)
+            {
+                hitTimer -= dt;
+                if (hitTimer <= 0f) LandHit();
+            }
             UpdateVisuals(dt);
         }
 
@@ -133,7 +143,14 @@ namespace Gatekeeper
         public void MoveTowards(Vector2 target, float dt)
         {
             float speed = data.speed * (slowTimer > 0f ? slowFactor : 1f);
-            body2D.MovePosition(Vector2.MoveTowards(Position, target, speed * dt));
+            Step(Vector2.MoveTowards(Position, target, speed * dt) - Position);
+        }
+
+        // Ground enemies stay on the lanes; flyers go straight over the grass.
+        void Step(Vector2 delta)
+        {
+            if (!IsFlying) delta = LaneEdge.Constrain(body2D, delta);
+            body2D.MovePosition(Position + delta);
         }
 
         public void MarkReachedGate()
@@ -141,12 +158,34 @@ namespace Gatekeeper
             ReachedGate = true;
         }
 
-        public void Lunge()
+        /// <summary>
+        /// Start an attack on the hero, or on the gate in AttackGate. The damage lands when the
+        /// weapon reaches the target: mid swing, when the sphere arrives, or when the arrow does.
+        /// </summary>
+        public void Strike()
         {
+            hitOnGate = StateId == EnemyStateId.AttackGate || Hero == null;
+            var target = hitOnGate ? Gate.AttackPoint : Hero.Position;
             lungeTimer = 0.12f;
-            if (animator == null) return;
-            var target = StateId == EnemyStateId.AttackGate || Hero == null ? Gate.AttackPoint : Hero.Position;
-            animator.PlayAttack(target - Position);
+            if (animator != null) animator.PlayAttack(target - Position);
+            hitTimer = weapon != null ? weapon.Play(target) : 0f;
+            hitPending = true;
+            if (hitTimer <= 0f) LandHit();
+        }
+
+        void LandHit()
+        {
+            hitPending = false;
+            if (GameManager.Instance == null || GameManager.Instance.Phase != GamePhase.Wave) return;
+            if (hitOnGate)
+            {
+                Gate.Health.Damage(data.damage);
+                return;
+            }
+            if (Hero == null || Hero.Health.IsDead) return;
+            var away = Hero.Position - Position;
+            var push = away.sqrMagnitude > 0.0001f ? away.normalized * data.hitKnockback : Vector2.zero;
+            Hero.TakeHit(data.damage, push);
         }
 
         // ---- Combat ---------------------------------------------------------
