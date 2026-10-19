@@ -1,5 +1,4 @@
 using System;
-using Gatekeeper.AI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -35,26 +34,13 @@ namespace Gatekeeper
         public Gate Gate => gate;
         public BuildManager Build => build;
         public LanePath[] Lanes => spawner.Lanes;
-        public WarCouncil Council { get; private set; }
-
-        public DefenseSnapshot CurrentSnapshot { get; private set; }
-        public float[] CurrentContext { get; private set; }
-        public int CurrentArm { get; private set; }
+        public AttackPlan CurrentPlan { get; private set; }
         public string IntentText { get; private set; }
         public float IntentTimer { get; private set; }
         public string ReportText { get; private set; }
-        public float LastReward { get; private set; }
         public string GameOverReason { get; private set; }
 
-        /// <summary>Raised when entering a phase. Used by bot mode.</summary>
-        public event Action<GamePhase> PhaseEntered;
-
-        /// <summary>Who is playing this run (null = human). Set by bot mode.</summary>
-        public string BotPersona { get; set; }
-
-        TelemetryLogger telemetry;
         System.Random rng;
-        float[] lastLaneTime = new float[MapConstants.LaneCount];
         float gateHpAtWaveStart;
         float heroHpAtWaveStart;
         int killsAtWaveStart;
@@ -63,8 +49,6 @@ namespace Gatekeeper
         {
             Instance = this;
             rng = new System.Random(config.seed == 0 ? Environment.TickCount : config.seed);
-            Council = new WarCouncil(PolicyStore.Get(config), config.randomWarmupWaves, config.seed);
-            if (config.logTelemetry) telemetry = new TelemetryLogger(config.telemetryFile);
         }
 
         void OnEnable() => Enemy.Killed += OnEnemyKilled;
@@ -86,11 +70,7 @@ namespace Gatekeeper
 
         // ---- Phase transitions ----------------------------------------------
 
-        void SetPhase(GamePhase phase)
-        {
-            Phase = phase;
-            PhaseEntered?.Invoke(phase);
-        }
+        void SetPhase(GamePhase phase) => Phase = phase;
 
         void EnterBuild()
         {
@@ -115,48 +95,37 @@ namespace Gatekeeper
 
         void EnterWave()
         {
-            CurrentSnapshot = new DefenseSnapshot { Weapon = hero.Combat.Weapon };
-            build.WriteSnapshot(CurrentSnapshot);
-            Array.Copy(lastLaneTime, CurrentSnapshot.HeroLaneTime, lastLaneTime.Length);
-
-            CurrentContext = ContextEncoder.Encode(CurrentSnapshot);
-            CurrentArm = Council.Choose(CurrentContext, WaveNumber);
-            var plan = PlanCatalog.FromArm(CurrentArm);
+            // The War Council picks a random plan for now.
+            CurrentPlan = PlanCatalog.FromIndex(rng.Next(PlanCatalog.Count));
             int budget = config.startBudget + config.budgetPerWave * (WaveNumber - 1);
             float hpScale = 1f + config.hpScalePerWave * (WaveNumber - 1);
-            spawner.Begin(WaveBuilder.Build(plan, budget, spawner.CostOf, rng), hpScale);
+            spawner.Begin(WaveBuilder.Build(CurrentPlan, budget, spawner.CostOf, rng), hpScale);
 
-            IntentText = WarReportWriter.Intent(CurrentArm, CurrentSnapshot, CurrentContext, Council.Policy);
+            IntentText = IntentFor(CurrentPlan);
             IntentTimer = config.intentBannerTime;
             gateHpAtWaveStart = gate.Health.Current;
             heroHpAtWaveStart = hero.Health.Current;
             killsAtWaveStart = Kills;
             WaveElapsed = 0f;
-            hero.ConsumeLaneTime();
             SetPhase(GamePhase.Wave);
         }
 
         void EndWave()
         {
             bool gameOver = gate.Health.IsDead || hero.Health.IsDead;
-            float avgProgress = spawner.Finish();
+            spawner.Finish();
             var outcome = new WaveOutcome
             {
                 GateDamage = gateHpAtWaveStart - gate.Health.Current,
                 GateMaxHp = gate.Health.Max,
                 HeroDamage = heroHpAtWaveStart - hero.Health.Current,
                 HeroMaxHp = hero.Health.Max,
-                AvgProgress = avgProgress,
                 Spawned = spawner.Spawned,
                 Kills = Kills - killsAtWaveStart,
                 ReachedGate = spawner.ReachedGate,
             };
 
-            LastReward = RewardFunction.Compute(outcome);
-            Council.Learn(LastReward);
-            telemetry?.LogWave(WaveNumber, Council.Policy.Name, Council.LastWasRandom, CurrentArm, LastReward, outcome, CurrentContext, BotPersona);
-            lastLaneTime = hero.ConsumeLaneTime();
-            ReportText = WarReportWriter.Debrief(CurrentArm, outcome, LastReward, CurrentContext, Council.Policy);
+            ReportText = ReportFor(CurrentPlan, outcome);
 
             if (gameOver)
             {
@@ -179,7 +148,6 @@ namespace Gatekeeper
 
         public void Restart()
         {
-            if (!config.keepPolicyOnRestart) PolicyStore.Reset();
             Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
@@ -220,6 +188,24 @@ namespace Gatekeeper
                     break;
             }
         }
+
+        // ---- War report text -------------------------------------------------
+
+        static string IntentFor(AttackPlan plan)
+        {
+            string target = plan.Focus == LaneFocus.Even
+                ? " across every lane."
+                : " at your " + MapConstants.LaneNames[(int)plan.Focus] + " lane.";
+            return "The War Council sends a " + PlanCatalog.ArmyName(plan.Army) + target;
+        }
+
+        static string ReportFor(AttackPlan plan, WaveOutcome o) =>
+            "Plan used: " + plan + "\n" +
+            "Gate damage: " + Percent(o.GateDamage, o.GateMaxHp) + "   Hero damage: " + Percent(o.HeroDamage, o.HeroMaxHp) + "\n" +
+            "Kills: " + o.Kills + "   Reached the gate: " + o.ReachedGate + " of " + o.Spawned;
+
+        static string Percent(float value, float max) =>
+            max <= 0f ? "0%" : Mathf.RoundToInt(100f * value / max) + "%";
 
         static bool Pressed(UnityEngine.InputSystem.Controls.ButtonControl key) => key != null && key.wasPressedThisFrame;
     }
