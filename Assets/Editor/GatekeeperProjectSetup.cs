@@ -758,6 +758,8 @@ public static class GatekeeperProjectSetup
         Set(ui, "intentBanner", IntentPanel(root));
         Set(ui, "reportPanel", ReportPanel(root));
         Set(ui, "gameOverPanel", GameOverPanel(root));
+        // Last, so the start screen draws on top of everything else.
+        Set(ui, "titlePanel", TitlePanel(root));
     }
 
     static readonly Vector2 TopLeft = new Vector2(0f, 1f);
@@ -876,22 +878,94 @@ public static class GatekeeperProjectSetup
         return view;
     }
 
+    static readonly Color DeathRed = Hex("#5E1F2B");
+
+    const string HowToPlayText =
+        "<b>Goal</b>\n" +
+        "Keep the gate standing. The run ends when the gate or you (the Gatekeeper) fall.\n\n" +
+        "<b>Every wave has 4 steps</b>\n" +
+        "1. <b>Build</b>  Press 1, 2 or 3 to pick Archer, Cannon or Frost. Left click a spot to place it, right click to remove it. Enter when ready.\n" +
+        "2. <b>Weapon</b>  Press 1 Bow (long range), 2 Sword (wide swing) or 3 Spear (long poke).\n" +
+        "3. <b>Fight</b>  WASD to move, Space or J to attack. Attacks aim at the nearest enemy.\n" +
+        "4. <b>War report</b>  See what the enemy sent and how it went. Enter for the next wave.\n\n" +
+        "<b>The enemy learns (the ML part)</b>\n" +
+        "The enemy is led by the War Council, a learning AI. Each wave it picks 1 of 16 attack plans: " +
+        "an army (Grunts, Runners, Shields or Flyers) and where to send it (left, middle, right or all lanes). " +
+        "It looks at how you play, your towers, your weapon and the lane you guard, and after the wave it scores how well its plan did. " +
+        "Over time it sends more of what beats you, and still tries something new now and then. Change your defence to stay ahead.";
+
+    static TitleView TitlePanel(Transform root)
+    {
+        var screen = FullScreen("Title Screen", root, new Color(Ink.r, Ink.g, Ink.b, 0.8f));
+
+        var title = Label("Title", screen, Center, Center, new Vector2(0f, 230f), new Vector2(1600f, 160f), 120, TextAlignmentOptions.Center, "The Last Gatekeeper");
+        title.fontStyle = FontStyles.Bold;
+        title.color = GateOrange;
+        Label("Tagline", screen, Center, Center, new Vector2(0f, 120f), new Vector2(1400f, 60f), 34, TextAlignmentOptions.Center, "Hold the gate. The enemy learns how you play.");
+        Icon("Gate Icon", screen, Art("Icons/Castle"), new Vector2(0f, 400f), 110f);
+
+        var start = ButtonAt("Start Button", screen, Vector2.zero, new Vector2(460f, 110f), "<b>Start</b>", 52, out _);
+        Anchor(start.GetComponent<RectTransform>(), Center, Center, new Vector2(0f, -40f));
+        var howTo = ButtonAt("How To Play Button", screen, Vector2.zero, new Vector2(320f, 64f), "How to Play", 28, out _);
+        Anchor(howTo.GetComponent<RectTransform>(), Center, Center, new Vector2(0f, -160f));
+        Label("Hint", screen, BottomCenter, BottomCenter, new Vector2(0f, 40f), new Vector2(1200f, 40f), 22, TextAlignmentOptions.Center, "Enter to start    H for how to play");
+
+        var help = FullScreen("How To Play", screen, new Color(Ink.r, Ink.g, Ink.b, 0.9f));
+        var panel = Panel("Panel", help, Center, Center, Vector2.zero, new Vector2(1400f, 900f));
+        var heading = Label("Heading", panel, TopCenter, TopCenter, new Vector2(0f, -24f), new Vector2(1300f, 70f), 52, TextAlignmentOptions.Center, "How to Play");
+        heading.fontStyle = FontStyles.Bold;
+        heading.color = GateOrange;
+        var body = Label("Body", panel, TopLeft, TopLeft, new Vector2(50f, -110f), new Vector2(1300f, 670f), 26, TextAlignmentOptions.TopLeft, HowToPlayText);
+        body.enableAutoSizing = true;
+        body.fontSizeMin = 18f;
+        body.fontSizeMax = 26f;
+        var back = ButtonAt("Back Button", panel, Vector2.zero, new Vector2(300f, 64f), "<b>Back</b> [Esc]", 26, out _);
+        Anchor(back.GetComponent<RectTransform>(), BottomCenter, BottomCenter, new Vector2(0f, 24f));
+
+        var view = screen.gameObject.AddComponent<TitleView>();
+        Set(view, "startButton", start);
+        Set(view, "howToPlayButton", howTo);
+        Set(view, "howToPlayPanel", help.gameObject);
+        Set(view, "backButton", back);
+        return view;
+    }
+
     static GameOverView GameOverPanel(Transform root)
     {
-        var panel = Panel("Game Over Panel", root, Center, Center, Vector2.zero, new Vector2(1040f, 680f));
-        var title = Label("Title", panel, TopCenter, TopCenter, new Vector2(0f, -20f), new Vector2(1000f, 90f), 64, TextAlignmentOptions.Center, "Game Over");
-        title.fontStyle = FontStyles.Bold;
-        var summary = Label("Summary", panel, TopLeft, TopLeft, new Vector2(24f, -120f), new Vector2(990f, 100f), 28, TextAlignmentOptions.Center, "");
-        var report = Label("Report", panel, TopLeft, TopLeft, new Vector2(24f, -230f), new Vector2(990f, 330f), 22, TextAlignmentOptions.TopLeft, "");
-        var button = ButtonAt("Restart Button", panel, Vector2.zero, new Vector2(360f, 60f), "<b>Restart</b> [R]", 26, out _);
-        Anchor(button.GetComponent<RectTransform>(), BottomCenter, BottomCenter, new Vector2(0f, 20f));
+        var screen = FullScreen("Death Screen", root, new Color(DeathRed.r, DeathRed.g, DeathRed.b, 0.85f));
+        screen.gameObject.AddComponent<CanvasGroup>();
 
-        var view = panel.gameObject.AddComponent<GameOverView>();
+        Icon("Skull", screen, Art("Icons/Skull"), new Vector2(0f, 330f), 140f);
+        var title = Label("Title", screen, Center, Center, new Vector2(0f, 190f), new Vector2(1600f, 130f), 100, TextAlignmentOptions.Center, "You have fallen");
+        title.fontStyle = FontStyles.Bold;
+        var summary = Label("Summary", screen, Center, Center, new Vector2(0f, 95f), new Vector2(1400f, 50f), 32, TextAlignmentOptions.Center, "");
+        var statsPanel = Panel("Stats Panel", screen, Center, Center, new Vector2(0f, 10f), new Vector2(1000f, 80f));
+        var stats = Label("Stats", statsPanel, Center, Center, Vector2.zero, Vector2.zero, 32, TextAlignmentOptions.Center, "");
+        Stretch(stats.rectTransform, 10f);
+        var report = Label("Report", screen, Center, Center, new Vector2(0f, -120f), new Vector2(1000f, 150f), 22, TextAlignmentOptions.Top, "");
+
+        var restart = ButtonAt("Restart Button", screen, Vector2.zero, new Vector2(380f, 80f), "<b>Try again</b> [R]", 30, out _);
+        Anchor(restart.GetComponent<RectTransform>(), Center, Center, new Vector2(-200f, -290f));
+        var menu = ButtonAt("Menu Button", screen, Vector2.zero, new Vector2(380f, 80f), "Main menu [M]", 30, out _);
+        Anchor(menu.GetComponent<RectTransform>(), Center, Center, new Vector2(200f, -290f));
+
+        var view = screen.gameObject.AddComponent<GameOverView>();
+        Set(view, "titleText", title);
         Set(view, "summaryText", summary);
+        Set(view, "statsText", stats);
         Set(view, "reportText", report);
-        Set(view, "restartButton", button);
-        panel.gameObject.SetActive(false);
+        Set(view, "restartButton", restart);
+        Set(view, "menuButton", menu);
+        screen.gameObject.SetActive(false);
         return view;
+    }
+
+    static RectTransform FullScreen(string name, Transform parent, Color color)
+    {
+        var rt = RectObject(name, parent, Center, Center, Vector2.zero, Vector2.zero);
+        Stretch(rt, 0f);
+        Plain(rt.gameObject.AddComponent<Image>(), color);
+        return rt;
     }
 
     // ---------------------------------------------------------- UI helpers

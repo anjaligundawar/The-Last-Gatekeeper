@@ -40,6 +40,7 @@ namespace Gatekeeper
                 case GamePhase.Build: return "Build your defence";
                 case GamePhase.WeaponPick: return "Choose a weapon";
                 case GamePhase.Wave: return "Hold the gate!";
+                case GamePhase.Title: return "";
                 case GamePhase.Report: return "War report";
                 default: return "Game over";
             }

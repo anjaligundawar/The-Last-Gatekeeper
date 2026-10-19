@@ -7,7 +7,7 @@ namespace Gatekeeper
 {
     /// <summary>
     /// The game's top-level state machine:
-    /// Build (place defences) -> WeaponPick -> Wave (fight) -> Report (war report) -> Build ...
+    /// Title (start screen) -> Build (place defences) -> WeaponPick -> Wave (fight) -> Report (war report) -> Build ...
     /// Any wave can end in GameOver when the gate or the hero falls.
     /// </summary>
     public class GameManager : MonoBehaviour
@@ -39,6 +39,13 @@ namespace Gatekeeper
         public float IntentTimer { get; private set; }
         public string ReportText { get; private set; }
         public string GameOverReason { get; private set; }
+        public bool HeroDied { get; private set; }
+
+        // Set by Restart so the reloaded scene skips the start screen.
+        static bool skipTitle;
+
+        // The key press that changed the phase must not also act on the new phase.
+        int phaseStartFrame = -1;
 
         System.Random rng;
         float gateHpAtWaveStart;
@@ -54,7 +61,15 @@ namespace Gatekeeper
         void OnEnable() => Enemy.Killed += OnEnemyKilled;
         void OnDisable() => Enemy.Killed -= OnEnemyKilled;
 
-        void Start() => EnterBuild();
+        void Start()
+        {
+            if (skipTitle)
+            {
+                skipTitle = false;
+                EnterBuild();
+            }
+            else SetPhase(GamePhase.Title);
+        }
 
         void OnDestroy()
         {
@@ -70,7 +85,16 @@ namespace Gatekeeper
 
         // ---- Phase transitions ----------------------------------------------
 
-        void SetPhase(GamePhase phase) => Phase = phase;
+        void SetPhase(GamePhase phase)
+        {
+            Phase = phase;
+            phaseStartFrame = Time.frameCount;
+        }
+
+        public void StartGame()
+        {
+            if (Phase == GamePhase.Title) EnterBuild();
+        }
 
         void EnterBuild()
         {
@@ -129,7 +153,9 @@ namespace Gatekeeper
 
             if (gameOver)
             {
-                GameOverReason = gate.Health.IsDead ? "The gate has fallen." : "The Gatekeeper has fallen.";
+                HeroDied = hero.Health.IsDead;
+                GameOverReason = HeroDied ? "The Gatekeeper has fallen." : "The gate has fallen.";
+                Shake(0.3f, 0.4f);
                 SetPhase(GamePhase.GameOver);
                 return;
             }
@@ -146,7 +172,21 @@ namespace Gatekeeper
             EnterBuild();
         }
 
+        /// <summary>Starts a new run straight away, skipping the start screen.</summary>
         public void Restart()
+        {
+            skipTitle = true;
+            ReloadScene();
+        }
+
+        /// <summary>Goes back to the start screen.</summary>
+        public void BackToTitle()
+        {
+            skipTitle = false;
+            ReloadScene();
+        }
+
+        static void ReloadScene()
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -156,6 +196,8 @@ namespace Gatekeeper
 
         void Update()
         {
+            if (Time.frameCount == phaseStartFrame) return;
+
             switch (Phase)
             {
                 case GamePhase.Build:
@@ -185,6 +227,7 @@ namespace Gatekeeper
 
                 case GamePhase.GameOver:
                     if (Pressed(Keyboard.current?.rKey)) Restart();
+                    else if (Pressed(Keyboard.current?.mKey)) BackToTitle();
                     break;
             }
         }
