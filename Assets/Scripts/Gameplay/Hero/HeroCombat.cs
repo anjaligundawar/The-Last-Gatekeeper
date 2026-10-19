@@ -11,8 +11,8 @@ namespace Gatekeeper
         [SerializeField] FadeOut slashEffect;
         [SerializeField] FadeOut thrustEffect;
         [Tooltip("Knockback speed for melee hits, in units per second.")]
-        [SerializeField] float swordKnockback = 7f;
-        [SerializeField] float spearKnockback = 6f;
+        [SerializeField] float swordKnockback = 10f;
+        [SerializeField] float spearKnockback = 9f;
 
         public WeaponType Weapon { get; set; } = WeaponType.Bow;
         public WeaponData Current => weapons[(int)Weapon];

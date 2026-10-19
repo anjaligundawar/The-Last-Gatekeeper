@@ -298,8 +298,8 @@ public static class GatekeeperProjectSetup
         var thrustFx = Effect("Fx_SpearThrust", Art("Effects/Thrust"), new Color(1f, 1f, 1f, 0.6f), 0.1f);
         var frostFx = Effect("Fx_FrostPulse", ring, new Color(FrostCyan.r, FrostCyan.g, FrostCyan.b, 0.6f), 0.3f);
 
-        var arrow = ProjectilePrefab("Arrow", Art("Projectiles/Arrow"), 12f, 3f, null);
-        var cannonball = ProjectilePrefab("Cannonball", Art("Projectiles/Cannonball"), 7f, 4f, explosionFx);
+        var arrow = ProjectilePrefab("Arrow", Art("Projectiles/Arrow"), 12f, 5f, null);
+        var cannonball = ProjectilePrefab("Cannonball", Art("Projectiles/Cannonball"), 7f, 6f, explosionFx);
 
         var set = new PrefabSet { enemies = new Enemy[4], towers = new Tower[3] };
         for (int i = 0; i < 4; i++)

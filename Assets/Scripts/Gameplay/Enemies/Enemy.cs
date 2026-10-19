@@ -25,7 +25,9 @@ namespace Gatekeeper
         [Tooltip("How long the body flashes white when hit. Needs the Sprite Flash material.")]
         [SerializeField] float flashDuration = 0.08f;
         [Tooltip("How long a knockback push lasts. The enemy doesn't act while it is pushed.")]
-        [SerializeField] float knockbackDuration = 0.12f;
+        [SerializeField] float knockbackDuration = 0.18f;
+        [Tooltip("How long the enemy stands idle after a hit that pushes it. Frost pulses don't push, so they only slow.")]
+        [SerializeField] float stunDuration = 1f;
 
         /// <summary>Raised when an enemy is killed (not when it is cleared at a wave timeout).</summary>
         public static event Action<Enemy> Killed;
@@ -61,6 +63,7 @@ namespace Gatekeeper
         bool removed;
         Vector2 knockback;
         float knockbackTimer;
+        float stunTimer;
         bool hitPending;
         bool hitOnGate;
         float hitTimer;
@@ -106,6 +109,12 @@ namespace Gatekeeper
                 float t = knockbackTimer / knockbackDuration;
                 Step(knockback * t * Time.fixedDeltaTime);
                 knockbackTimer -= Time.fixedDeltaTime;
+                return;
+            }
+            if (stunTimer > 0f)
+            {
+                // Stunned: stand idle, then pick up where the state machine left off.
+                stunTimer -= Time.fixedDeltaTime;
                 return;
             }
             state.Tick(this, Time.fixedDeltaTime);
@@ -195,10 +204,16 @@ namespace Gatekeeper
         {
             if (IsDead) return;
             flashTimer = flashDuration;
-            if (push != Vector2.zero && data.knockbackScale > 0f)
+            if (push != Vector2.zero)
             {
-                knockback = push * data.knockbackScale;
-                knockbackTimer = knockbackDuration;
+                // A pushing hit interrupts the enemy: its swing is cancelled and it stands idle for a moment.
+                stunTimer = stunDuration;
+                hitPending = false;
+                if (data.knockbackScale > 0f)
+                {
+                    knockback = push * data.knockbackScale;
+                    knockbackTimer = knockbackDuration;
+                }
             }
             Health.Damage(damage * data.Multiplier(type));
         }
@@ -236,7 +251,7 @@ namespace Gatekeeper
         void UpdateVisuals(float dt)
         {
             Color target = baseColor;
-            switch (state.Id)
+            switch (stunTimer > 0f ? EnemyStateId.March : state.Id)
             {
                 case EnemyStateId.Chase:
                     target = Color.Lerp(baseColor, chaseColor, 0.35f);
