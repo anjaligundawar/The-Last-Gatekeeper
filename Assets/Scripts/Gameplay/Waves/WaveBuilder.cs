@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Gatekeeper.AI;
 
 namespace Gatekeeper
 {

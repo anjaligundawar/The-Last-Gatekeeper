@@ -30,7 +30,7 @@ namespace Gatekeeper
                 ? "Time left " + Mathf.CeilToInt(Mathf.Max(0f, gm.PhaseTimer)) + "s\n"
                 : "";
             infoText.text = timer + "Weapon: " + gm.Hero.Combat.Current.displayName +
-                            "\nEnemies alive: " + EnemyRegistry.Count + "\n<size=70%>[Tab] AI brain</size>";
+                            "\nEnemies alive: " + EnemyRegistry.Count;
         }
 
         static string PhaseName(GamePhase phase)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Gatekeeper
 {
-    /// <summary>Spawns a wave's enemies over time and measures how far they got.</summary>
+    /// <summary>Spawns a wave's enemies over time and counts how many reached the gate.</summary>
     public class WaveSpawner : MonoBehaviour
     {
         [SerializeField] GameConfig config;
@@ -21,7 +21,6 @@ namespace Gatekeeper
         public LanePath[] Lanes => lanes;
 
         readonly Queue<SpawnOrder> queue = new Queue<SpawnOrder>();
-        readonly List<float> progress = new List<float>();
         float hpScale;
         float timer;
         bool started;
@@ -34,7 +33,6 @@ namespace Gatekeeper
         public void Begin(List<SpawnOrder> orders, float enemyHpScale)
         {
             queue.Clear();
-            progress.Clear();
             foreach (var order in orders) queue.Enqueue(order);
             hpScale = enemyHpScale;
             Spawned = 0;
@@ -64,21 +62,15 @@ namespace Gatekeeper
         void OnEnemyRemoved(Enemy enemy)
         {
             if (!started) return;
-            progress.Add(enemy.MaxProgress);
             if (enemy.ReachedGate) ReachedGate++;
         }
 
-        /// <summary>Ends the wave: clears leftovers and returns the average progress of every spawned enemy.</summary>
-        public float Finish()
+        /// <summary>Ends the wave and clears any enemies still alive.</summary>
+        public void Finish()
         {
             queue.Clear();
             foreach (var enemy in new List<Enemy>(EnemyRegistry.Alive)) enemy.Despawn();
             started = false;
-
-            if (progress.Count == 0) return 0f;
-            float sum = 0f;
-            foreach (var p in progress) sum += p;
-            return sum / progress.Count;
         }
     }
 }
