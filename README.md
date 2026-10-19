@@ -35,7 +35,7 @@ All balance numbers live in ScriptableObjects under `Assets/Data` (enemies, towe
 
 ### Art
 
-Environment, towers, projectiles, icons and UI are 16 px pixel art in `Assets/Art/Pixel`. `PixelArtImporter` gives everything in that folder 16 pixels per unit, point filtering and no compression, so new sprites dropped there import correctly. The ground is a Tilemap (`Environment/Grid/Ground`): paint grass with the `Grass_*` tiles and lanes with the `Path` Rule Tile, which joins up on its own. A Pixel Perfect Camera renders 384 x 216 art pixels (24 x 13.5 tiles). The hero and enemies are still plain shapes until their character sprites are added. The UI font is Pixelify Sans (SIL Open Font License, see `Assets/Art/Fonts`).
+Environment, towers, projectiles, icons and UI are 16 px pixel art in `Assets/Art/Pixel`. `PixelArtImporter` gives everything in that folder 16 pixels per unit, point filtering and no compression, so new sprites dropped there import correctly. The ground is a Tilemap (`Environment/Grid/Ground`): paint grass with the `Grass_*` tiles and lanes with the `Path` Rule Tile, which joins up on its own. A Pixel Perfect Camera renders 384 x 216 art pixels (24 x 13.5 tiles). The hero and enemies use 16 px sprites from the Ninja Adventure pack by Pixel-boy (CC0), in `Assets/Art/NinjaAdventure`: hero KnightGold, grunt Skeleton, runner NinjaDark, shield GladiatorBlue, flyer YellowsBat. Their frames are sliced into `Assets/Art/Pixel/Characters/<Hero|Grunt|Runner|Shield|Flyer>`, and `CharacterAnimator` plays the 4-direction walk and attack frames. To change a character, replace the frames in its folder and rerun the setup. The UI font is Pixelify Sans (SIL Open Font License, see `Assets/Art/Fonts`).
 
 ## Code structure
 

@@ -276,11 +276,7 @@ public static class GatekeeperProjectSetup
         public Tower[] towers;
     }
 
-    static readonly Color[] EnemyColors =
-    {
-        // Enemy kingdom violets plus one warm accent, until the character sprites arrive
-        Hex("#9A6FC0"), Hex("#D3A8F0"), Hex("#6B4E8C"), Hex("#E07045"),
-    };
+    // Collider sizes, indexed by EnemyType. The sprites come from Assets/Art/Pixel/Characters/<type>.
     static readonly float[] EnemySizes = { 0.45f, 0.35f, 0.55f, 0.4f };
 
     static PrefabSet CreatePrefabs(DataSet data)
@@ -295,9 +291,8 @@ public static class GatekeeperProjectSetup
         var cannonball = ProjectilePrefab("Cannonball", Art("Projectiles/Cannonball"), 7f, 3f, explosionFx);
 
         var set = new PrefabSet { enemies = new Enemy[4], towers = new Tower[3] };
-        Sprite[] enemyShapes = { square, triangle, square, circle };
         for (int i = 0; i < 4; i++)
-            set.enemies[i] = EnemyPrefab(data.enemies[i], enemyShapes[i], EnemyColors[i], EnemySizes[i], deathFx);
+            set.enemies[i] = EnemyPrefab(data.enemies[i], EnemySizes[i], deathFx);
 
         Sprite[] towerShapes = { Art("Towers/Archer"), Art("Towers/Cannon"), Art("Towers/Frost") };
         Projectile[] towerShots = { arrow, cannonball, null };
@@ -358,7 +353,7 @@ public static class GatekeeperProjectSetup
         return SavePrefab(go, PrefabFolder + "/Projectiles/" + name + ".prefab").GetComponent<Projectile>();
     }
 
-    static Enemy EnemyPrefab(EnemyData data, Sprite shape, Color color, float size, FadeOut deathFx)
+    static Enemy EnemyPrefab(EnemyData data, float size, FadeOut deathFx)
     {
         var go = new GameObject(data.displayName);
         var health = go.AddComponent<Health>();
@@ -368,14 +363,18 @@ public static class GatekeeperProjectSetup
         var col = go.AddComponent<CircleCollider2D>();
         col.radius = size * 0.5f;
 
-        SpriteObject("Shadow", go.transform, Art("Effects/Shadow"), Color.white, new Vector2(0f, data.flying ? -0.45f : -size * 0.45f), Vector2.one, 9);
-        var body = SpriteObject("Body", go.transform, shape, color, Vector2.zero, Vector2.one * size, data.flying ? 15 : 10);
+        // Sprites stand on their feet (bottom pivot); flyers hover above their shadow.
+        float feet = data.flying ? -0.1f : -0.45f;
+        SpriteObject("Shadow", go.transform, Art("Effects/Shadow"), Color.white, new Vector2(0f, -0.45f), Vector2.one, 9);
+        string role = "Characters/" + data.type;
+        var body = SpriteObject("Body", go.transform, Art(role + "/Walk_Down_0"), Color.white, new Vector2(0f, feet), Vector2.one, data.flying ? 15 : 10);
         if (flashMaterial != null) body.sharedMaterial = flashMaterial;
-        var icon = SpriteObject("StateIcon", go.transform, Art("Icons/State_Chase"), Color.white, new Vector2(0f, size * 0.5f + 0.45f), Vector2.one, 40);
+        AddAnimator(go, body, role, alwaysAnimate: data.flying);
+        var icon = SpriteObject("StateIcon", go.transform, Art("Icons/State_Chase"), Color.white, new Vector2(0f, feet + 1.45f), Vector2.one, 40);
 
         var barRoot = new GameObject("HealthBar");
         barRoot.transform.SetParent(go.transform, false);
-        barRoot.transform.localPosition = new Vector2(0f, size * 0.5f + 0.15f);
+        barRoot.transform.localPosition = new Vector2(0f, feet + 1.15f);
         var back = SpriteObject("Background", barRoot.transform, square, Ink, Vector2.zero, new Vector2(0.6f, 0.1f), 41);
         var fill = SpriteObject("Fill", back.transform, square, HeroGreen, Vector2.zero, Vector2.one, 42);
         var bar = barRoot.AddComponent<HealthBar>();
@@ -391,6 +390,28 @@ public static class GatekeeperProjectSetup
         Set(enemy, "attackIcon", Art("Icons/State_Attack"));
         Set(enemy, "attackGateIcon", Art("Icons/State_AttackGate"));
         return SavePrefab(go, PrefabFolder + "/Enemies/" + data.displayName + ".prefab").GetComponent<Enemy>();
+    }
+
+    // Walk frames (4 per direction) and optional attack frames, sliced from the Ninja Adventure sheets.
+    static void AddAnimator(GameObject go, SpriteRenderer body, string folder, bool alwaysAnimate)
+    {
+        var animator = go.AddComponent<CharacterAnimator>();
+        Set(animator, "body", body);
+        foreach (var dir in new[] { "Down", "Up", "Left", "Right" })
+        {
+            var frames = new Sprite[4];
+            for (int i = 0; i < 4; i++) frames[i] = Art(folder + "/Walk_" + dir + "_" + i);
+            SetArray(animator, "walk" + dir, frames);
+        }
+        var attack = new Sprite[4];
+        string[] dirs = { "Down", "Up", "Left", "Right" };
+        for (int i = 0; i < 4; i++)
+            attack[i] = AssetDatabase.LoadAssetAtPath<Sprite>(PixelFolder + "/" + folder + "/Attack_" + dirs[i] + ".png");
+        if (attack[0] != null) SetArray(animator, "attack", attack);
+        else SetArray(animator, "attack", new Sprite[0]);
+        var so = new SerializedObject(animator);
+        so.FindProperty("alwaysAnimate").boolValue = alwaysAnimate;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static Tower TowerPrefab(TowerData data, Sprite shape, Projectile projectile, FadeOut pulse)
@@ -416,9 +437,9 @@ public static class GatekeeperProjectSetup
         var rb = go.AddComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         go.AddComponent<CircleCollider2D>().radius = 0.3f;
-        var body = SpriteObject("Body", go.transform, circle, new Color(1f, 0.92f, 0.35f), Vector2.zero, Vector2.one * 0.6f, 20);
-
-        SpriteObject("Shadow", go.transform, Art("Effects/Shadow"), Color.white, new Vector2(0f, -0.3f), Vector2.one, 19);
+        var body = SpriteObject("Body", go.transform, Art("Characters/Hero/Walk_Down_0"), Color.white, new Vector2(0f, -0.45f), Vector2.one, 20);
+        AddAnimator(go, body, "Characters/Hero", alwaysAnimate: false);
+        SpriteObject("Shadow", go.transform, Art("Effects/Shadow"), Color.white, new Vector2(0f, -0.45f), Vector2.one, 19);
 
         // Weapon on a pivot at the hero's centre; HeroWeaponVisual rotates the pivot.
         var pivot = new GameObject("WeaponPivot").transform;

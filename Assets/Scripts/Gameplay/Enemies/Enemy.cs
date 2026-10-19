@@ -48,6 +48,7 @@ namespace Gatekeeper
         public bool ReachedGate { get; private set; }
 
         Rigidbody2D body2D;
+        CharacterAnimator animator;
         IEnemyState state = EnemyStates.March;
         Color baseColor;
         Color displayColor;
@@ -68,6 +69,7 @@ namespace Gatekeeper
         {
             Health = GetComponent<Health>();
             body2D = GetComponent<Rigidbody2D>();
+            animator = GetComponent<CharacterAnimator>();
             Health.Died += OnDied;
             baseColor = displayColor = body.color;
             baseScale = body.transform.localScale;
@@ -139,7 +141,13 @@ namespace Gatekeeper
             ReachedGate = true;
         }
 
-        public void Lunge() => lungeTimer = 0.12f;
+        public void Lunge()
+        {
+            lungeTimer = 0.12f;
+            if (animator == null) return;
+            var target = StateId == EnemyStateId.AttackGate || Hero == null ? Gate.AttackPoint : Hero.Position;
+            animator.PlayAttack(target - Position);
+        }
 
         // ---- Combat ---------------------------------------------------------
 
