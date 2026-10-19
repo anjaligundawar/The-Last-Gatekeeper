@@ -197,7 +197,7 @@ public static class GatekeeperProjectSetup
     static DataSet CreateData()
     {
         var set = new DataSet();
-        set.config = Asset<GameConfig>(DataFolder + "/GameConfig.asset", c => { });
+        set.config = Asset<GameConfig>(DataFolder + "/GameConfig.asset", c => c.heroHealBetweenWaves = 0f);
 
         set.enemies = new[]
         {
@@ -705,6 +705,23 @@ public static class GatekeeperProjectSetup
                     tilemap.SetTile(cell, grassTiles[h % 3 == 0 ? h % 4 : 0]);
                 }
             }
+
+        // An invisible tilemap over every grass cell, merged into one collider, keeps the
+        // hero and ground enemies on the lanes (see LaneEdge).
+        var edgeTile = Asset<Tile>(TileFolder + "/LaneEdge.asset", t => { t.sprite = null; t.colliderType = Tile.ColliderType.Grid; });
+        var edges = new GameObject("Lane Edges");
+        edges.transform.SetParent(grid.transform, false);
+        var edgeMap = edges.AddComponent<Tilemap>();
+        for (int y = MapMinY - 1; y <= MapMaxY; y++)
+            for (int x = MapMinX - 1; x <= MapMaxX; x++)
+                if (!IsPath(x, y)) edgeMap.SetTile(new Vector3Int(x, y, 0), edgeTile);
+        var edgeBody = edges.AddComponent<Rigidbody2D>();
+        edgeBody.bodyType = RigidbodyType2D.Static;
+        var tileCollider = edges.AddComponent<TilemapCollider2D>();
+        tileCollider.compositeOperation = Collider2D.CompositeOperation.Merge;
+        var composite = edges.AddComponent<CompositeCollider2D>();
+        composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
+        edges.AddComponent<LaneEdge>();
     }
 
     // A Rule Tile with one rule per combination of path neighbours (up, right, down, left),

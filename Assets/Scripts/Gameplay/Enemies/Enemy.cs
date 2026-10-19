@@ -104,7 +104,7 @@ namespace Gatekeeper
             {
                 // Pushed back: slide and skip the state machine until the push ends.
                 float t = knockbackTimer / knockbackDuration;
-                body2D.MovePosition(Position + knockback * t * Time.fixedDeltaTime);
+                Step(knockback * t * Time.fixedDeltaTime);
                 knockbackTimer -= Time.fixedDeltaTime;
                 return;
             }
@@ -143,7 +143,14 @@ namespace Gatekeeper
         public void MoveTowards(Vector2 target, float dt)
         {
             float speed = data.speed * (slowTimer > 0f ? slowFactor : 1f);
-            body2D.MovePosition(Vector2.MoveTowards(Position, target, speed * dt));
+            Step(Vector2.MoveTowards(Position, target, speed * dt) - Position);
+        }
+
+        // Ground enemies stay on the lanes; flyers go straight over the grass.
+        void Step(Vector2 delta)
+        {
+            if (!IsFlying) delta = LaneEdge.Constrain(body2D, delta);
+            body2D.MovePosition(Position + delta);
         }
 
         public void MarkReachedGate()

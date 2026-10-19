@@ -94,7 +94,7 @@ namespace Gatekeeper
         {
             p.x = Mathf.Clamp(p.x, arenaBounds.xMin, arenaBounds.xMax);
             p.y = Mathf.Clamp(p.y, arenaBounds.yMin, arenaBounds.yMax);
-            body2D.MovePosition(p);
+            body2D.MovePosition(body2D.position + LaneEdge.Constrain(body2D, p - body2D.position));
         }
 
         static bool CanMove(GamePhase phase) =>

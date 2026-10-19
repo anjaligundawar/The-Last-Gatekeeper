@@ -17,7 +17,8 @@ namespace Gatekeeper
         public int maxPerType = 3;
 
         [Header("Between waves")]
-        [Range(0f, 1f)] public float heroHealBetweenWaves = 0.5f;
+        [Tooltip("Share of the hero's max HP restored after each wave. 0 = damage carries over.")]
+        [Range(0f, 1f)] public float heroHealBetweenWaves = 0f;
 
         [Header("Enemy scaling")]
         public int startBudget = 10;

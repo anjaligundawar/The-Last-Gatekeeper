@@ -18,7 +18,7 @@ MonoBehaviour:
   intentBannerTime: 4
   maxDefences: 6
   maxPerType: 3
-  heroHealBetweenWaves: 0.5
+  heroHealBetweenWaves: 0
   startBudget: 10
   budgetPerWave: 4
   hpScalePerWave: 0.08

@@ -168,7 +168,7 @@ namespace Gatekeeper
         {
             if (Phase != GamePhase.Report) return;
             WaveNumber++;
-            hero.Health.Heal(hero.Health.Max * config.heroHealBetweenWaves);
+            if (config.heroHealBetweenWaves > 0f) hero.Health.Heal(hero.Health.Max * config.heroHealBetweenWaves);
             EnterBuild();
         }
 
