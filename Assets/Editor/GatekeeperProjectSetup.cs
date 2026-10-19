@@ -48,10 +48,15 @@ public static class GatekeeperProjectSetup
                      PrefabFolder + "/Enemies", PrefabFolder + "/Towers", PrefabFolder + "/Projectiles", PrefabFolder + "/Effects", "Assets/Scenes" })
             EnsureFolder(folder);
 
+        // Open the new scene first: opening a scene unloads unused assets, which would
+        // destroy the prefabs and data assets created below before they are wired up.
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
         CreateSprites();
         var data = CreateData();
-        var prefabs = CreatePrefabs(data);
-        CreateScene(data, prefabs);
+        CreatePrefabs(data);
+        AssetDatabase.SaveAssets();
+        CreateScene(data, LoadPrefabs(data));
 
         AssetDatabase.SaveAssets();
         Debug.Log("[Gatekeeper] Project assets created. Open " + ScenePath + " and press Play.");
@@ -229,6 +234,28 @@ public static class GatekeeperProjectSetup
         return set;
     }
 
+    // Reload the prefabs from disk so the scene is wired to the saved assets, not to
+    // component references that the editor may have unloaded since they were created.
+    static PrefabSet LoadPrefabs(DataSet data)
+    {
+        var set = new PrefabSet { enemies = new Enemy[data.enemies.Length], towers = new Tower[data.towers.Length] };
+        set.hero = LoadPrefab<Hero>(PrefabFolder + "/Hero.prefab");
+        for (int i = 0; i < set.enemies.Length; i++)
+            set.enemies[i] = LoadPrefab<Enemy>(PrefabFolder + "/Enemies/" + data.enemies[i].displayName + ".prefab");
+        for (int i = 0; i < set.towers.Length; i++)
+            set.towers[i] = LoadPrefab<Tower>(PrefabFolder + "/Towers/" + data.towers[i].displayName + ".prefab");
+        return set;
+    }
+
+    static T LoadPrefab<T>(string path) where T : Component
+    {
+        var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        var component = go != null ? go.GetComponent<T>() : null;
+        if (component == null)
+            throw new System.InvalidOperationException("[Gatekeeper setup] Could not load " + typeof(T).Name + " from " + path);
+        return component;
+    }
+
     static FadeOut Effect(string name, Sprite sprite, Color color, float duration)
     {
         var go = new GameObject(name);
@@ -336,8 +363,6 @@ public static class GatekeeperProjectSetup
 
     static void CreateScene(DataSet data, PrefabSet prefabs)
     {
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-
         // Camera and light
         var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
         camGo.transform.position = new Vector3(0f, 0f, -10f);
