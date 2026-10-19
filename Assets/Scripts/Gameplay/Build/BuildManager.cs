@@ -85,7 +85,7 @@ namespace Gatekeeper
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return null;
 
             Vector2 world = cam.ScreenToWorldPoint(mouse.position.ReadValue());
-            Physics2D.OverlapPoint(world, new ContactFilter2D().NoFilter(), hits);
+            Physics2D.OverlapPoint(world, ContactFilter2D.noFilter, hits);
             foreach (var hit in hits)
                 if (hit.TryGetComponent(out BuildSpot spot)) return spot;
             return null;
