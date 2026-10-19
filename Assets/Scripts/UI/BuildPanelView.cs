@@ -11,8 +11,8 @@ namespace Gatekeeper
         [SerializeField] TMP_Text[] towerLabels = new TMP_Text[3];
         [SerializeField] TMP_Text countText;
         [SerializeField] Button readyButton;
-        [SerializeField] Color normalColor = new Color(0.22f, 0.24f, 0.28f);
-        [SerializeField] Color selectedColor = new Color(0.45f, 0.5f, 0.62f);
+        [SerializeField] Color normalColor = Color.white;
+        [SerializeField] Color selectedColor = new Color(1f, 0.85f, 0.5f);
 
         void Start()
         {

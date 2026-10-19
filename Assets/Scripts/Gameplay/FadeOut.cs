@@ -16,7 +16,9 @@ namespace Gatekeeper
         {
             if (prefab == null) return null;
             var fx = Instantiate(prefab, position, Quaternion.Euler(0f, 0f, angle));
-            fx.transform.localScale = new Vector3(size.x, size.y, 1f);
+            // The prefab's own scale maps its sprite to a 1 x 1 unit box, so size is in world units.
+            var unit = prefab.transform.localScale;
+            fx.transform.localScale = new Vector3(size.x * unit.x, size.y * unit.y, 1f);
             return fx;
         }
 

@@ -7,6 +7,8 @@ namespace Gatekeeper
     {
         [SerializeField] float speed = 11f;
         [SerializeField] FadeOut impactEffect;
+        [Tooltip("Knockback speed on hit. Splash pushes away from the blast.")]
+        [SerializeField] float knockback = 1.5f;
 
         Enemy target;
         Vector2 destination;
@@ -37,15 +39,18 @@ namespace Gatekeeper
             if (splashRadius > 0f)
             {
                 foreach (var enemy in Targeting.InRange(destination, splashRadius, hitsAir: false))
-                    enemy.TakeHit(damage, damageType);
+                    enemy.TakeHit(damage, damageType, Push(enemy.Position - destination, transform.right));
                 FadeOut.Spawn(impactEffect, destination, Vector2.one * splashRadius * 2f);
                 if (GameManager.Instance != null) GameManager.Instance.Shake(0.03f, 0.05f);
             }
             else if (target != null && !target.IsDead)
             {
-                target.TakeHit(damage, damageType);
+                target.TakeHit(damage, damageType, transform.right * knockback);
             }
             Destroy(gameObject);
         }
+
+        Vector2 Push(Vector2 away, Vector2 fallback) =>
+            (away.sqrMagnitude > 0.0001f ? away.normalized : fallback.normalized) * knockback;
     }
 }

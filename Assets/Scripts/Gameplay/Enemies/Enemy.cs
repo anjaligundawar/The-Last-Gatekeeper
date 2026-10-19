@@ -16,6 +16,17 @@ namespace Gatekeeper
         [SerializeField] Color slowedColor = new Color(0.6f, 0.9f, 1f);
         [SerializeField] FadeOut deathEffect;
 
+        [Header("State icons (leave empty to tint the icon instead)")]
+        [SerializeField] Sprite chaseIcon;
+        [SerializeField] Sprite attackIcon;
+        [SerializeField] Sprite attackGateIcon;
+
+        [Header("Hit feedback")]
+        [Tooltip("How long the body flashes white when hit. Needs the Sprite Flash material.")]
+        [SerializeField] float flashDuration = 0.08f;
+        [Tooltip("How long a knockback push lasts. The enemy doesn't act while it is pushed.")]
+        [SerializeField] float knockbackDuration = 0.12f;
+
         /// <summary>Raised when an enemy is killed (not when it is cleared at a wave timeout).</summary>
         public static event Action<Enemy> Killed;
 
@@ -47,6 +58,12 @@ namespace Gatekeeper
         float slowFactor = 1f;
         float lungeTimer;
         bool removed;
+        Vector2 knockback;
+        float knockbackTimer;
+        MaterialPropertyBlock flashBlock;
+        bool hasFlashMaterial;
+
+        static readonly int FlashAmountId = Shader.PropertyToID("_FlashAmount");
 
         void Awake()
         {
@@ -56,6 +73,8 @@ namespace Gatekeeper
             baseColor = displayColor = body.color;
             baseScale = body.transform.localScale;
             stateIcon.enabled = false;
+            flashBlock = new MaterialPropertyBlock();
+            hasFlashMaterial = body.sharedMaterial != null && body.sharedMaterial.HasProperty(FlashAmountId);
         }
 
         /// <summary>Called by the WaveSpawner right after Instantiate.</summary>
@@ -75,6 +94,14 @@ namespace Gatekeeper
         {
             if (IsDead || Lane == null) return;
             if (GameManager.Instance == null || GameManager.Instance.Phase != GamePhase.Wave) return;
+            if (knockbackTimer > 0f)
+            {
+                // Pushed back: slide and skip the state machine until the push ends.
+                float t = knockbackTimer / knockbackDuration;
+                body2D.MovePosition(Position + knockback * t * Time.fixedDeltaTime);
+                knockbackTimer -= Time.fixedDeltaTime;
+                return;
+            }
             state.Tick(this, Time.fixedDeltaTime);
             if (!ReachedGate) MaxProgress = Mathf.Max(MaxProgress, Lane.Progress(Position, WaypointIndex));
         }
@@ -119,10 +146,16 @@ namespace Gatekeeper
 
         // ---- Combat ---------------------------------------------------------
 
-        public void TakeHit(float damage, DamageType type)
+        /// <param name="push">Knockback velocity in units per second. Zero for no knockback.</param>
+        public void TakeHit(float damage, DamageType type, Vector2 push = default)
         {
             if (IsDead) return;
-            flashTimer = 0.08f;
+            flashTimer = flashDuration;
+            if (push != Vector2.zero && data.knockbackScale > 0f)
+            {
+                knockback = push * data.knockbackScale;
+                knockbackTimer = knockbackDuration;
+            }
             Health.Damage(damage * data.Multiplier(type));
         }
 
@@ -163,14 +196,15 @@ namespace Gatekeeper
             {
                 case EnemyStateId.Chase:
                     target = Color.Lerp(baseColor, chaseColor, 0.35f);
-                    stateIcon.enabled = true;
-                    stateIcon.color = chaseColor;
+                    ShowIcon(chaseIcon, chaseColor);
                     break;
                 case EnemyStateId.Attack:
+                    target = Color.Lerp(baseColor, attackColor, 0.45f);
+                    ShowIcon(attackIcon, attackColor);
+                    break;
                 case EnemyStateId.AttackGate:
                     target = Color.Lerp(baseColor, attackColor, 0.45f);
-                    stateIcon.enabled = true;
-                    stateIcon.color = attackColor;
+                    ShowIcon(attackGateIcon != null ? attackGateIcon : attackIcon, attackColor);
                     break;
                 default:
                     stateIcon.enabled = false;
@@ -179,8 +213,33 @@ namespace Gatekeeper
             if (slowTimer > 0f) target = Color.Lerp(target, slowedColor, 0.5f);
 
             displayColor = Color.Lerp(displayColor, target, 1f - Mathf.Exp(-10f * dt));
-            body.color = flashTimer > 0f ? Color.white : displayColor;
+            bool flashing = flashTimer > 0f;
+            if (hasFlashMaterial)
+            {
+                body.color = displayColor;
+                body.GetPropertyBlock(flashBlock);
+                flashBlock.SetFloat(FlashAmountId, flashing ? 1f : 0f);
+                body.SetPropertyBlock(flashBlock);
+            }
+            else
+            {
+                body.color = flashing ? Color.white : displayColor;
+            }
             body.transform.localScale = baseScale * (lungeTimer > 0f ? 1.2f : 1f);
+        }
+
+        void ShowIcon(Sprite icon, Color tint)
+        {
+            stateIcon.enabled = true;
+            if (icon != null)
+            {
+                stateIcon.sprite = icon;
+                stateIcon.color = Color.white;
+            }
+            else
+            {
+                stateIcon.color = tint;
+            }
         }
     }
 }
