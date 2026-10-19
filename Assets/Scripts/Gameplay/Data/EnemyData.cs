@@ -22,6 +22,9 @@ namespace Gatekeeper
         public float arrowMultiplier = 1f;
         public float explosiveMultiplier = 1f;
 
+        [Tooltip("1 = normal knockback, 0 = can't be pushed.")]
+        public float knockbackScale = 1f;
+
         [Header("Behaviour (detect < lose, so enemies don't flicker between states)")]
         public float detectRange = 3f;
         public float loseRange = 5f;
